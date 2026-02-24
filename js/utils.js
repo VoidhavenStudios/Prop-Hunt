@@ -3,7 +3,8 @@ const CONFIG = {
     friction: 0.8,
     speed: 5,
     jumpForce: 12,
-    reachDistance: 150
+    reachDistance: 150,
+    worldScale: 0.75 
 };
 
 function checkAABB(rect1, rect2) {
