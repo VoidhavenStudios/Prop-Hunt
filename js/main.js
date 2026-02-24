@@ -6,10 +6,7 @@ const mapBlocks = [];
 const props = [];
 let player;
 
-const camera = {
-    x: 0,
-    y: 0
-};
+const camera = { x: 0, y: 0 };
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -19,22 +16,49 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
+function resolveSpawnOverlaps() {
+    const iterations = 15;
+    
+    for (let k = 0; k < iterations; k++) {
+        for (let prop of props) {
+            prop.resolveMapCollision(mapBlocks);
+            
+            for (let other of props) {
+                if (prop !== other) {
+                    prop.resolvePropCollision(other);
+                }
+            }
+        }
+    }
+}
+
 function init() {
-    mapBlocks.push(new Block(-500, 600, 3000, 200, 'tex-brick')); 
-    mapBlocks.push(new Block(200, 450, 200, 50, 'tex-brick'));
-    mapBlocks.push(new Block(600, 350, 300, 50, 'tex-brick'));
-    mapBlocks.push(new Block(-200, 300, 150, 50, 'tex-brick'));
-    mapBlocks.push(new Block(1000, 200, 100, 400, 'tex-brick')); 
-    mapBlocks.push(new Block(1100, 500, 500, 50, 'tex-brick'));
+    const roomW = 1200;
+    const roomH = 800;
+    const wallThick = 64;
 
-    props.push(new Prop(300, 400, 0));
-    props.push(new Prop(350, 400, 1));
-    props.push(new Prop(650, 200, 2));
-    props.push(new Prop(750, 200, 3));
-    props.push(new Prop(-150, 200, 4));
-    props.push(new Prop(1200, 400, 5));
+    mapBlocks.push(new Block(0, 0, roomW, wallThick, 'tex-brick')); 
+    mapBlocks.push(new Block(0, roomH - wallThick, roomW, wallThick, 'tex-brick')); 
+    mapBlocks.push(new Block(0, wallThick, wallThick, roomH - (wallThick*2), 'tex-brick')); 
+    mapBlocks.push(new Block(roomW - wallThick, wallThick, wallThick, roomH - (wallThick*2), 'tex-brick')); 
 
-    player = new Player(100, 100);
+    mapBlocks.push(new Block(200, 600, 200, 32, 'tex-brick'));
+    mapBlocks.push(new Block(600, 500, 300, 32, 'tex-brick'));
+    mapBlocks.push(new Block(100, 350, 150, 32, 'tex-brick'));
+    mapBlocks.push(new Block(800, 300, 100, 32, 'tex-brick'));
+    
+    props.push(new Prop(300, 500, 0));
+    props.push(new Prop(350, 500, 1));
+    props.push(new Prop(650, 400, 2));
+    props.push(new Prop(750, 400, 3));
+    props.push(new Prop(150, 250, 4));
+    props.push(new Prop(850, 200, 5));
+    props.push(new Prop(500, 700, 0)); 
+    props.push(new Prop(520, 700, 1)); 
+
+    resolveSpawnOverlaps();
+
+    player = new Player(150, 600);
 
     loop();
 }
@@ -63,16 +87,20 @@ function loop() {
     player.update();
     player.resolveMapCollision(mapBlocks);
 
+    if (player.isDisguised) {
+        for (let prop of props) {
+            player.resolvePropCollision(prop);
+        }
+    }
+
     for (let prop of props) {
         prop.update();
         prop.resolveMapCollision(mapBlocks);
         
-        if (checkAABB(player, prop)) {
-             let overlapX = (player.w / 2 + prop.w / 2) - Math.abs((player.x + player.w / 2) - (prop.x + prop.w / 2));
-             if (overlapX > 0) {
-                 if (player.x < prop.x) prop.vx += 1;
-                 else prop.vx -= 1;
-             }
+        for (let other of props) {
+            if (prop !== other) {
+                prop.resolvePropCollision(other);
+            }
         }
     }
 
@@ -81,7 +109,9 @@ function loop() {
     ctx.translate(-camera.x, -camera.y);
 
     for (let block of mapBlocks) block.draw(ctx);
+    
     for (let prop of props) prop.draw(ctx);
+    
     player.draw(ctx);
 
     ctx.restore();
@@ -90,5 +120,5 @@ function loop() {
 }
 
 window.onload = () => {
-    setTimeout(init, 100); 
+    setTimeout(init, 200); 
 };
