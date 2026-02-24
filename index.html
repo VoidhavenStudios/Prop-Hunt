@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Prop Hunt Test</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui-layer">
+            <p>WASD: Move/Jump | Left Click: Become Prop | Right Click: Reset to Player</p>
+        </div>
+    </div>
+
+    <img id="tex-player" src="assets/player/default.png" style="display:none;">
+    <img id="tex-brick" src="assets/map/brick.png" style="display:none;">
+    <img id="tex-crate0" src="assets/props/crate0.png" style="display:none;">
+    <img id="tex-crate1" src="assets/props/crate1.png" style="display:none;">
+    <img id="tex-crate2" src="assets/props/crate2.png" style="display:none;">
+    <img id="tex-crate3" src="assets/props/crate3.png" style="display:none;">
+    <img id="tex-crate4" src="assets/props/crate4.png" style="display:none;">
+    <img id="tex-crate5" src="assets/props/crate5.png" style="display:none;">
+
+    <script src="js/utils.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/physics.js"></script>
+    <script src="js/entities.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
