@@ -8,6 +8,7 @@ class PhysicsBody {
         this.vy = 0;
         this.isStatic = isStatic;
         this.grounded = false;
+        this.hitboxOffset = { x: 0, y: 0 }; 
     }
 
     update() {
@@ -40,6 +41,33 @@ class PhysicsBody {
                     }
                     this.vy = 0;
                 }
+            }
+        }
+    }
+
+    resolvePropCollision(otherProp) {
+        if (checkAABB(this, otherProp)) {
+            let overlapX = (this.w / 2 + otherProp.w / 2) - Math.abs((this.x + this.w / 2) - (otherProp.x + otherProp.w / 2));
+            let overlapY = (this.h / 2 + otherProp.h / 2) - Math.abs((this.y + this.h / 2) - (otherProp.y + otherProp.h / 2));
+
+            if (overlapX < overlapY) {
+                if (Math.abs(this.vx) > Math.abs(otherProp.vx)) {
+                    if (this.x < otherProp.x) this.x -= overlapX * 0.5;
+                    else this.x += overlapX * 0.5;
+                    if (!otherProp.isStatic) {
+                        if (this.x < otherProp.x) otherProp.x += overlapX * 0.5;
+                        else otherProp.x -= overlapX * 0.5;
+                    }
+                }
+                this.vx *= 0.5;
+            } else {
+                if (this.y < otherProp.y) {
+                    this.y -= overlapY;
+                    this.grounded = true;
+                } else {
+                    this.y += overlapY;
+                }
+                this.vy *= 0.5;
             }
         }
     }
