@@ -1,12 +1,24 @@
 class Block extends PhysicsBody {
-    constructor(x, y, imgId) {
-        const img = document.getElementById(imgId);
-        super(x, y, img.width, img.height, true);
-        this.image = img;
+    constructor(x, y, w, h, imgId) {
+        super(x, y, w, h, true);
+        this.image = document.getElementById(imgId);
+        this.pattern = null;
     }
 
     draw(ctx) {
-        ctx.drawImage(this.image, this.x, this.y);
+        if (!this.pattern && this.image.complete) {
+            this.pattern = ctx.createPattern(this.image, 'repeat');
+        }
+        if (this.pattern) {
+            ctx.fillStyle = this.pattern;
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.fillRect(0, 0, this.w, this.h);
+            ctx.restore();
+        } else {
+            ctx.fillStyle = '#555';
+            ctx.fillRect(this.x, this.y, this.w, this.h);
+        }
     }
 }
 
@@ -33,7 +45,7 @@ class Player extends PhysicsBody {
         this.isDisguised = false;
     }
 
-    handleInput(input, props) {
+    handleInput(input, worldMouse, props) {
         if (input.keys['KeyA'] || input.keys['ArrowLeft']) {
             this.vx -= 1;
         }
@@ -50,7 +62,7 @@ class Player extends PhysicsBody {
         }
 
         if (input.mouse.leftDown) {
-            this.tryMorph(input.mouse, props);
+            this.tryMorph(worldMouse, props);
             input.mouse.leftDown = false; 
         }
     }
@@ -72,7 +84,6 @@ class Player extends PhysicsBody {
         this.currentImage = prop.image;
         this.w = prop.w;
         this.h = prop.h;
-        
         this.y -= 5;
     }
 
@@ -88,7 +99,7 @@ class Player extends PhysicsBody {
         ctx.drawImage(this.currentImage, this.x, this.y, this.w, this.h);
         
         if (!this.isDisguised) {
-            ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+            ctx.strokeStyle = "rgba(255, 255, 255, 0.3)";
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(this.x + this.w/2, this.y + this.h/2, CONFIG.reachDistance, 0, Math.PI * 2);
