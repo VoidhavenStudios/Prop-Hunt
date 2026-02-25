@@ -5,9 +5,9 @@ import { pointInPolygon } from './math.js';
 export class BasePlayer extends PhysicsBody {
     constructor(x, y) {
         const img = document.getElementById('tex-player');
-        super(x, y, img.width, img.height, false);
+        super(x, y, img ? img.width : 64, img ? img.height : 64, false);
         this.originalImage = img;
-        this.setHitboxFromImage(img);
+        if (img) this.setHitboxFromImage(img);
         this.facingRight = true;
         this.cursor = { x: 0, y: 0 };
         this.heldProp = null;
@@ -17,6 +17,8 @@ export class BasePlayer extends PhysicsBody {
     }
 
     commonInput(input, camera, props) {
+        if (!input || !camera || !props) return;
+
         const accel = this.grounded ? CONFIG.groundAccel : CONFIG.airAccel;
         let moving = false;
 
@@ -68,7 +70,9 @@ export class BasePlayer extends PhysicsBody {
         if (input.mouse.rightDown) {
             if (!this.heldProp) {
                 for (let prop of props) {
-                    if (pointInPolygon(this.cursor, prop.getVertices())) {
+                    if (!prop) continue;
+                    const v = prop.getVertices();
+                    if (v && pointInPolygon(this.cursor, v)) {
                         this.heldProp = prop;
                         this.heldProp.isHeld = true;
                         break;
@@ -76,7 +80,7 @@ export class BasePlayer extends PhysicsBody {
                 }
             }
             
-            if (this.heldProp) {
+            if (this.heldProp && this.heldProp.box) {
                 const targetX = this.cursor.x - this.heldProp.box.w / 2 - this.heldProp.box.x;
                 const targetY = this.cursor.y - this.heldProp.box.h / 2 - this.heldProp.box.y;
                 
@@ -96,6 +100,7 @@ export class BasePlayer extends PhysicsBody {
     }
 
     drawCursor(ctx) {
+        if (!this.cursor) return;
         ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
         ctx.beginPath();
         ctx.arc(this.cursor.x, this.cursor.y, 4, 0, Math.PI * 2);
