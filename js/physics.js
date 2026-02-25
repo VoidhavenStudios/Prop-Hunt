@@ -1,4 +1,7 @@
-class PhysicsBody {
+import { CONFIG } from './config.js';
+import { calculateTightHitbox, calculateConvexHullFromImage, getAxes, project, findContactPoint } from './math.js';
+
+export class PhysicsBody {
     constructor(x, y, w, h, isStatic) {
         this.x = x;
         this.y = y;
@@ -23,14 +26,16 @@ class PhysicsBody {
 
     update() {
         if (!this.isStatic) {
-            if (this.isHeld) {
-                this.vx *= 0.8;
-                this.vy *= 0.8;
-                this.angularVelocity *= 0.8;
-            } else {
+            if (!this.isHeld) {
                 this.vy += CONFIG.gravity;
             }
             
+            const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+            if (speed > CONFIG.maxPropSpeed) {
+                this.vx = (this.vx / speed) * CONFIG.maxPropSpeed;
+                this.vy = (this.vy / speed) * CONFIG.maxPropSpeed;
+            }
+
             const friction = this.grounded ? CONFIG.groundFriction : CONFIG.airFriction;
             this.vx *= friction;
             
@@ -121,8 +126,8 @@ class PhysicsBody {
         const totalInvMass = this.invMass + other.invMass;
         if (totalInvMass === 0) return false;
 
-        const percent = 0.8;
-        const slop = 0.1;
+        const percent = 0.4;
+        const slop = 0.5;
         const correctionMagnitude = Math.max(minOverlap - slop, 0) / totalInvMass * percent;
         
         this.x -= mtv.x * this.invMass * correctionMagnitude;
@@ -131,7 +136,6 @@ class PhysicsBody {
         other.y += mtv.y * other.invMass * correctionMagnitude;
 
         const contact = findContactPoint(v1, v2, this, other);
-        
         const r1 = { x: contact.x - cx1, y: contact.y - cy1 };
         const r2 = { x: contact.x - cx2, y: contact.y - cy2 };
 
@@ -143,7 +147,7 @@ class PhysicsBody {
         const velAlongNormal = rv.x * mtv.x + rv.y * mtv.y;
         if (velAlongNormal > 0) return true;
 
-        const e = 0.1; 
+        const restitution = Math.abs(velAlongNormal) < 2.0 ? 0.0 : 0.15;
         const r1CrossN = r1.x * mtv.y - r1.y * mtv.x;
         const r2CrossN = r2.x * mtv.y - r2.y * mtv.x;
 
@@ -151,7 +155,7 @@ class PhysicsBody {
                            (r1CrossN * r1CrossN) * this.invInertia + 
                            (r2CrossN * r2CrossN) * other.invInertia;
 
-        let j = -(1 + e) * velAlongNormal / invMassSum;
+        let j = -(1 + restitution) * velAlongNormal / invMassSum;
         const impulse = { x: mtv.x * j, y: mtv.y * j };
 
         this.vx -= impulse.x * this.invMass;
@@ -161,6 +165,30 @@ class PhysicsBody {
         other.vx += impulse.x * other.invMass;
         other.vy += impulse.y * other.invMass;
         if (!other.fixedRotation) other.angularVelocity += r2CrossN * j * other.invInertia;
+
+        const tangent = { x: rv.x - velAlongNormal * mtv.x, y: rv.y - velAlongNormal * mtv.y };
+        const tangentLen = Math.sqrt(tangent.x * tangent.x + tangent.y * tangent.y);
+        if (tangentLen > 0.0001) {
+            tangent.x /= tangentLen;
+            tangent.y /= tangentLen;
+            const r1CrossT = r1.x * tangent.y - r1.y * tangent.x;
+            const r2CrossT = r2.x * tangent.y - r2.y * tangent.x;
+            const invMassSumT = this.invMass + other.invMass + 
+                                (r1CrossT * r1CrossT) * this.invInertia + 
+                                (r2CrossT * r2CrossT) * other.invInertia;
+            let jt = -(rv.x * tangent.x + rv.y * tangent.y) / invMassSumT;
+            const mu = 0.4;
+            let frictionImpulse = jt;
+            if (Math.abs(jt) > j * mu) frictionImpulse = Math.sign(jt) * j * mu;
+
+            this.vx -= tangent.x * frictionImpulse * this.invMass;
+            this.vy -= tangent.y * frictionImpulse * this.invMass;
+            if (!this.fixedRotation) this.angularVelocity -= r1CrossT * frictionImpulse * this.invInertia;
+
+            other.vx += tangent.x * frictionImpulse * other.invMass;
+            other.vy += tangent.y * frictionImpulse * other.invMass;
+            if (!other.fixedRotation) other.angularVelocity += r2CrossT * frictionImpulse * other.invInertia;
+        }
 
         if (mtv.y < -0.5) other.grounded = true;
         if (mtv.y > 0.5) this.grounded = true;
