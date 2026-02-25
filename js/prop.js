@@ -3,7 +3,6 @@ import { pointInPolygon } from './math.js';
 export class PropPlayer extends BasePlayer {
     constructor(x, y) {
         super(x, y);
-        console.info("Initializing PropPlayer");
         this.isDisguised = false;
         this.currentImage = this.originalImage;
         this.fixedRotation = true; 
@@ -13,39 +12,27 @@ export class PropPlayer extends BasePlayer {
     handleSpecificInput(input, entities) {
         if (!input) return;
         if (input.keys['KeyP']) {
-            if (this.isDisguised) {
-                console.info("PropPlayer unmorphing via P key");
-                this.resetDisguise();
-            }
+            this.resetDisguise();
         }
         if (input.mouse.leftPressed) {
             this.tryMorph(entities);
         }
     }
     tryMorph(props) {
-        if (!props || !this.cursor) {
-            console.warn("tryMorph missing props or cursor");
-            return;
-        }
+        if (!props || !this.cursor) return;
         for (let prop of props) {
             if (!prop) continue;
             const v = prop.getVertices();
             if (v && pointInPolygon(this.cursor, v)) {
                 if (prop !== this.heldProp) {
-                    console.info("PropPlayer morphing into prop type", prop.typeIndex);
                     this.becomeProp(prop);
-                } else {
-                    console.debug("Cannot morph into currently held prop");
                 }
                 return;
             }
         }
     }
     becomeProp(targetProp) {
-        if (!targetProp || !targetProp.image || !targetProp.box) {
-            console.error("Invalid targetProp for becomeProp", targetProp);
-            return;
-        }
+        if (!targetProp || !targetProp.image || !targetProp.box) return;
         this.isDisguised = true;
         this.currentImage = targetProp.image;
         this.w = targetProp.image.width;
@@ -61,14 +48,11 @@ export class PropPlayer extends BasePlayer {
         this.invInertia = targetProp.invInertia;
     }
     resetDisguise() {
-        console.info("Resetting PropPlayer disguise");
         this.isDisguised = false;
         this.currentImage = this.originalImage;
         if (this.originalImage) {
             this.w = this.originalImage.width;
             this.h = this.originalImage.height;
-        } else {
-            console.error("Missing originalImage during resetDisguise");
         }
         this.box = { ...this.defaultBox };
         this.localVertices = this.defaultLocalVertices ? [...this.defaultLocalVertices] : null;
