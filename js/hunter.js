@@ -49,7 +49,7 @@ export class HunterPlayer extends BasePlayer {
             if (angle > Math.PI/2) angle = Math.PI/2;
 
             ctx.scale(-1, 1);
-            ctx.rotate(-angle); 
+            ctx.rotate(angle); 
             ctx.drawImage(gunImg, -gunImg.width / 2, -gunImg.height / 2);
         }
         
