@@ -17,9 +17,7 @@ class HunterPlayer extends BasePlayer {
         if (input.keys['Digit4']) this.currentGunIndex = 3;
 
         if (input.mouse.leftPressed) {
-        }
-        
-        if (input.mouse.middleDown) {
+            // Shoot
         }
     }
 
@@ -31,8 +29,10 @@ class HunterPlayer extends BasePlayer {
         ctx.restore();
 
         const gunImg = this.guns[this.currentGunIndex];
-        const anchorX = this.facingRight ? this.x + this.w : this.x;
-        const anchorY = this.y + this.h * 0.4;
+        
+        // Anchor point on player (Side edge, slightly above middle)
+        const anchorX = this.facingRight ? this.x + this.w - 5 : this.x + 5;
+        const anchorY = this.y + this.h * 0.45;
         
         const dx = this.cursor.x - anchorX;
         const dy = this.cursor.y - anchorY;
@@ -41,14 +41,15 @@ class HunterPlayer extends BasePlayer {
         ctx.translate(anchorX, anchorY);
         
         if (this.facingRight) {
-            const angle = Math.atan2(dy, Math.max(0.001, dx));
+            const angle = Math.atan2(dy, Math.max(0, dx)); // Limit to right side 180
             ctx.rotate(angle);
-            ctx.drawImage(gunImg, 0, -gunImg.height / 2);
+            // Pivot around center of gun image
+            ctx.drawImage(gunImg, -gunImg.width / 2, -gunImg.height / 2);
         } else {
-            const angle = Math.atan2(dy, Math.max(0.001, -dx));
+            const angle = Math.atan2(dy, Math.min(0, dx)); // Limit to left side 180
             ctx.scale(-1, 1);
-            ctx.rotate(angle);
-            ctx.drawImage(gunImg, 0, -gunImg.height / 2);
+            ctx.rotate(-angle + Math.PI); // Adjust for mirrored scale
+            ctx.drawImage(gunImg, -gunImg.width / 2, -gunImg.height / 2);
         }
         
         ctx.restore();
