@@ -4,6 +4,8 @@ class PropPlayer extends BasePlayer {
         this.isDisguised = false;
         this.currentImage = this.originalImage;
         this.fixedRotation = true; 
+        this.defaultLocalVertices = this.localVertices ? [...this.localVertices] : null;
+        this.defaultBox = { ...this.box };
     }
 
     handleSpecificInput(input, entities) {
@@ -33,9 +35,14 @@ class PropPlayer extends BasePlayer {
         this.w = targetProp.image.width;
         this.h = targetProp.image.height;
         this.box = { ...targetProp.box };
+        this.localVertices = targetProp.localVertices ? [...targetProp.localVertices] : null;
         this.y -= 10;
         this.angle = targetProp.angle;
         this.fixedRotation = false; 
+        this.mass = targetProp.mass;
+        this.invMass = targetProp.invMass;
+        this.inertia = targetProp.inertia;
+        this.invInertia = targetProp.invInertia;
     }
 
     resetDisguise() {
@@ -43,11 +50,16 @@ class PropPlayer extends BasePlayer {
         this.currentImage = this.originalImage;
         this.w = this.originalImage.width;
         this.h = this.originalImage.height;
-        this.setHitboxFromImage(this.originalImage);
+        this.box = { ...this.defaultBox };
+        this.localVertices = this.defaultLocalVertices ? [...this.defaultLocalVertices] : null;
         this.y -= 10;
         this.angle = 0;
         this.angularVelocity = 0;
         this.fixedRotation = true; 
+        this.mass = 40;
+        this.invMass = 1 / this.mass;
+        this.inertia = 0;
+        this.invInertia = 0;
     }
 
     draw(ctx) {
