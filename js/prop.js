@@ -1,4 +1,7 @@
-class PropPlayer extends BasePlayer {
+import { BasePlayer } from './player.js';
+import { pointInPolygon } from './math.js';
+
+export class PropPlayer extends BasePlayer {
     constructor(x, y) {
         super(x, y);
         this.isDisguised = false;
