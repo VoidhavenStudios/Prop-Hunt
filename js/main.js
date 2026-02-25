@@ -19,13 +19,35 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
+function checkSafeSpawn(x, y, propsArr) {
+    let img = document.getElementById('tex-player');
+    let pb = img ? { x: x, y: y, w: img.width, h: img.height } : { x: x, y: y, w: 64, h: 64 };
+    
+    for (let prop of propsArr) {
+        let pr = { x: prop.x + prop.box.x, y: prop.y + prop.box.y, w: prop.box.w, h: prop.box.h };
+        if (checkAABB(pb, pr)) return false;
+    }
+    return true;
+}
+
 function spawnPlayer() {
-    const startX = 200;
-    const startY = CONFIG.mapHeight - 400;
+    let spawnX = 200;
+    let spawnY = CONFIG.mapHeight - 400;
+
+    for (let i = 0; i < 50; i++) {
+        let tx = 200 + Math.random() * (CONFIG.mapWidth - 400);
+        let ty = CONFIG.mapHeight - 400; 
+        if (checkSafeSpawn(tx, ty, props)) {
+            spawnX = tx;
+            spawnY = ty;
+            break;
+        }
+    }
+
     if (isHunter) {
-        player = new HunterPlayer(startX, startY);
+        player = new HunterPlayer(spawnX, spawnY);
     } else {
-        player = new PropPlayer(startX, startY);
+        player = new PropPlayer(spawnX, spawnY);
     }
 }
 
