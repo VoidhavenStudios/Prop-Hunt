@@ -8,6 +8,8 @@ class BasePlayer extends PhysicsBody {
         this.cursor = { x: 0, y: 0 };
         this.heldProp = null;
         this.fixedRotation = true;
+        this.mass = 40;
+        this.invMass = 1 / this.mass;
     }
 
     commonInput(input, camera, props) {
@@ -77,20 +79,8 @@ class BasePlayer extends PhysicsBody {
                 const pDx = targetX - this.heldProp.x;
                 const pDy = targetY - this.heldProp.y;
 
-                let targetVx = pDx * 0.2;
-                let targetVy = pDy * 0.2;
-                
-                const maxHoldSpeed = 25;
-                const speed = Math.sqrt(targetVx * targetVx + targetVy * targetVy);
-                if (speed > maxHoldSpeed) {
-                    targetVx = (targetVx / speed) * maxHoldSpeed;
-                    targetVy = (targetVy / speed) * maxHoldSpeed;
-                }
-
-                this.heldProp.vx += (targetVx - this.heldProp.vx) * 0.5;
-                this.heldProp.vy += (targetVy - this.heldProp.vy) * 0.5;
-                
-                this.heldProp.angularVelocity *= 0.8;
+                this.heldProp.vx += pDx * 0.15;
+                this.heldProp.vy += pDy * 0.15;
             }
         } else {
             if (this.heldProp) {
