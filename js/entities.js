@@ -30,13 +30,14 @@ class WorldProp extends PhysicsBody {
         this.image = img;
         this.typeIndex = typeIndex;
         this.setHitboxFromImage(img);
+        this.fixedRotation = false;
     }
 
     draw(ctx) {
         ctx.save();
-        ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
+        ctx.translate(this.x + this.box.x + this.box.w / 2, this.y + this.box.y + this.box.h / 2);
         ctx.rotate(this.angle);
-        ctx.drawImage(this.image, -this.w / 2, -this.h / 2);
+        ctx.drawImage(this.image, -this.box.w / 2 - this.box.x, -this.box.h / 2 - this.box.y);
         ctx.restore();
     }
 }
