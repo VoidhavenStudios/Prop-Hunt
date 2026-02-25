@@ -24,28 +24,34 @@ class HunterPlayer extends BasePlayer {
     }
 
     draw(ctx) {
-        ctx.drawImage(this.originalImage, this.x, this.y);
+        ctx.save();
+        ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
+        if (!this.facingRight) ctx.scale(-1, 1);
+        ctx.drawImage(this.originalImage, -this.w / 2, -this.h / 2);
+        ctx.restore();
 
         const gunImg = this.guns[this.currentGunIndex];
-        
         const anchorX = this.facingRight ? this.x + this.w : this.x;
         const anchorY = this.y + this.h * 0.4;
         
         const dx = this.cursor.x - anchorX;
         const dy = this.cursor.y - anchorY;
-        const angle = Math.atan2(dy, dx);
 
         ctx.save();
         ctx.translate(anchorX, anchorY);
-        ctx.rotate(angle);
         
-        if (Math.abs(angle) > Math.PI / 2) {
-            ctx.scale(1, -1);
+        if (this.facingRight) {
+            const angle = Math.atan2(dy, Math.max(0.001, dx));
+            ctx.rotate(angle);
+            ctx.drawImage(gunImg, 0, -gunImg.height / 2);
+        } else {
+            const angle = Math.atan2(dy, Math.max(0.001, -dx));
+            ctx.scale(-1, 1);
+            ctx.rotate(angle);
+            ctx.drawImage(gunImg, 0, -gunImg.height / 2);
         }
-
-        ctx.drawImage(gunImg, -gunImg.width / 2, -gunImg.height / 2);
+        
         ctx.restore();
-
         this.drawCursor(ctx);
     }
 }
