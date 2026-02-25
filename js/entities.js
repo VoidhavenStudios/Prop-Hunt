@@ -26,90 +26,80 @@ class Prop extends PhysicsBody {
     constructor(x, y, typeIndex) {
         const imgId = `tex-crate${typeIndex}`;
         const img = document.getElementById(imgId);
-        const tightBox = getTightHitbox(img);
-        
-        super(x + tightBox.x, y + tightBox.y, tightBox.w, tightBox.h, false);
-        
+        super(x, y, img.width, img.height, false);
         this.image = img;
         this.typeIndex = typeIndex;
-        this.hitboxOffset = { x: tightBox.x, y: tightBox.y };
-        this.fullWidth = img.width;
-        this.fullHeight = img.height;
+        this.calculateTightHitbox(img);
     }
 
     draw(ctx) {
-        ctx.drawImage(this.image, this.x - this.hitboxOffset.x, this.y - this.hitboxOffset.y);
+        ctx.drawImage(this.image, this.x, this.y);
     }
 }
 
 class Player extends PhysicsBody {
     constructor(x, y) {
         const img = document.getElementById('tex-player');
-        const tightBox = getTightHitbox(img);
-        super(x + tightBox.x, y + tightBox.y, tightBox.w, tightBox.h, false);
-        
+        super(x, y, img.width, img.height, false);
         this.originalImage = img;
         this.currentImage = img;
         this.isDisguised = false;
-        
-        this.hitboxOffset = { x: tightBox.x, y: tightBox.y };
-        this.originalStats = { w: tightBox.w, h: tightBox.h, offX: tightBox.x, offY: tightBox.y };
-        
-        this.reticle = { x: 0, y: 0 };
+        this.calculateTightHitbox(img);
+        this.cursor = { x: 0, y: 0 };
     }
 
-    handleInput(input, worldMouse, props) {
+    handleInput(input, camera, props) {
         if (input.keys['KeyA'] || input.keys['ArrowLeft']) {
             this.vx -= 1;
         }
         if (input.keys['KeyD'] || input.keys['ArrowRight']) {
             this.vx += 1;
         }
-        
-        let jForce = CONFIG.baseJumpForce;
-        if (this.isDisguised) {
-            const sizeFactor = (this.w * this.h) / 2000; 
-            jForce += Math.min(sizeFactor, 5); 
-        }
-
         if ((input.keys['KeyW'] || input.keys['ArrowUp'] || input.keys['Space']) && this.grounded) {
-            this.vy = -jForce;
+            let bonus = 0;
+            if (this.isDisguised) {
+                bonus = this.h * 0.05;
+            }
+            this.vy = -(CONFIG.baseJumpForce + bonus);
             this.grounded = false;
         }
-
-        const dx = worldMouse.x - (this.x + this.w/2);
-        const dy = worldMouse.y - (this.y + this.h/2);
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        const angle = Math.atan2(dy, dx);
-        
-        const clampDist = Math.min(dist, CONFIG.reachDistance);
-        
-        this.reticle.x = (this.x + this.w/2) + Math.cos(angle) * clampDist;
-        this.reticle.y = (this.y + this.h/2) + Math.sin(angle) * clampDist;
 
         if (input.mouse.rightDown) {
             this.resetDisguise();
         }
 
+        const worldMouseX = (input.mouse.x / CONFIG.worldScale) + camera.x;
+        const worldMouseY = (input.mouse.y / CONFIG.worldScale) + camera.y;
+        
+        const centerX = this.x + this.w / 2;
+        const centerY = this.y + this.h / 2;
+
+        const dx = worldMouseX - centerX;
+        const dy = worldMouseY - centerY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist > CONFIG.reachDistance) {
+            const angle = Math.atan2(dy, dx);
+            this.cursor.x = centerX + Math.cos(angle) * CONFIG.reachDistance;
+            this.cursor.y = centerY + Math.sin(angle) * CONFIG.reachDistance;
+        } else {
+            this.cursor.x = worldMouseX;
+            this.cursor.y = worldMouseY;
+        }
+
         if (input.mouse.leftDown) {
-            this.tryMorph(props);
+            this.tryMorph(this.cursor, props);
             input.mouse.leftDown = false; 
         }
     }
 
-    tryMorph(props) {
-        const rSize = 4;
-        const pointerRect = { 
-            x: this.reticle.x - rSize/2, 
-            y: this.reticle.y - rSize/2, 
-            w: rSize, 
-            h: rSize 
-        };
-
+    tryMorph(cursorPos, props) {
         for (let prop of props) {
-            if (checkAABB(pointerRect, prop)) {
-                 this.becomeProp(prop);
-                 return;
+            const r = getHitbox(prop);
+            if (cursorPos.x >= r.x && cursorPos.x <= r.x + r.w &&
+                cursorPos.y >= r.y && cursorPos.y <= r.y + r.h) {
+                this.becomeProp(prop);
+                return;
             }
         }
     }
@@ -117,27 +107,27 @@ class Player extends PhysicsBody {
     becomeProp(prop) {
         this.isDisguised = true;
         this.currentImage = prop.image;
-        this.w = prop.w;
-        this.h = prop.h;
-        this.hitboxOffset = { x: prop.hitboxOffset.x, y: prop.hitboxOffset.y };
-        this.y -= 5; 
+        this.w = prop.image.width;
+        this.h = prop.image.height;
+        this.box = { ...prop.box }; 
+        this.y -= 10;
     }
 
     resetDisguise() {
         this.isDisguised = false;
         this.currentImage = this.originalImage;
-        this.w = this.originalStats.w;
-        this.h = this.originalStats.h;
-        this.hitboxOffset = { x: this.originalStats.offX, y: this.originalStats.offY };
-        this.y -= 5;
+        this.w = this.originalImage.width;
+        this.h = this.originalImage.height;
+        this.calculateTightHitbox(this.originalImage);
+        this.y -= 10;
     }
 
     draw(ctx) {
-        ctx.drawImage(this.currentImage, this.x - this.hitboxOffset.x, this.y - this.hitboxOffset.y);
+        ctx.drawImage(this.currentImage, this.x, this.y);
         
-        ctx.fillStyle = "#FF0000";
+        ctx.fillStyle = "rgba(255, 0, 0, 0.8)";
         ctx.beginPath();
-        ctx.arc(this.reticle.x, this.reticle.y, 3, 0, Math.PI * 2);
+        ctx.arc(this.cursor.x, this.cursor.y, 4, 0, Math.PI * 2);
         ctx.fill();
     }
 }
