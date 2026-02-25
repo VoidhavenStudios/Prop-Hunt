@@ -114,7 +114,11 @@ function loop() {
         for (let block of mapBlocks) player.resolveCollision(block);
         
         if (player instanceof PropPlayer && player.isDisguised) {
-             for (let prop of props) player.resolveCollision(prop);
+             for (let prop of props) {
+                 if (prop !== player.heldProp) {
+                     player.resolveCollision(prop);
+                 }
+             }
         }
 
         for (let i = 0; i < props.length; i++) {
