@@ -1,4 +1,4 @@
-class InputHandler {
+export class InputHandler {
     constructor(canvas) {
         this.keys = {};
         this.mouse = { x: 0, y: 0, leftDown: false, rightDown: false, middleDown: false, rightPressed: false, leftPressed: false };
