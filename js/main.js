@@ -13,7 +13,7 @@ const ctx = canvas.getContext('2d');
 const input = new InputHandler(canvas);
 const mapBlocks = [];
 const props = [];
-let player;
+let player = null;
 let isHunter = true;
 
 const camera = { x: 0, y: 0 };
@@ -31,7 +31,9 @@ function checkSafeSpawn(x, y, propsArr) {
     let img = document.getElementById('tex-player');
     let pb = img ? { x: x, y: y, w: img.width, h: img.height } : { x: x, y: y, w: 64, h: 64 };
     
+    if (!propsArr) return true;
     for (let prop of propsArr) {
+        if (!prop || !prop.box) continue;
         let pr = { x: prop.x + prop.box.x, y: prop.y + prop.box.y, w: prop.box.w, h: prop.box.h };
         if (checkAABB(pb, pr)) return false;
     }
@@ -97,13 +99,16 @@ function resolveInitialOverlaps() {
     for (let k = 0; k < 10; k++) {
         for (let i = 0; i < props.length; i++) {
             for (let j = i + 1; j < props.length; j++) {
-                props[i].resolveCollision(props[j]);
+                if (props[i] && props[j]) {
+                    props[i].resolveCollision(props[j]);
+                }
             }
         }
     }
 }
 
 function updateCamera() {
+    if (!player) return;
     const scale = CONFIG.worldScale;
     const targetX = player.x + player.w / 2;
     const targetY = player.y + player.h / 4; 
@@ -118,7 +123,7 @@ function updateCamera() {
 }
 
 function loop() {
-    if (!menu.isPaused) {
+    if (!menu.isPaused && player) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         updateCamera();
 
@@ -129,8 +134,10 @@ function loop() {
         player.grounded = false;
         
         for (let i = 0; i < props.length; i++) {
-            props[i].update();
-            props[i].grounded = false;
+            if (props[i]) {
+                props[i].update();
+                props[i].grounded = false;
+            }
         }
 
         for (let iter = 0; iter < 4; iter++) {
@@ -138,22 +145,25 @@ function loop() {
             
             if (player instanceof PropPlayer && player.isDisguised) {
                  for (let prop of props) {
-                     if (prop !== player.heldProp) {
+                     if (prop && prop !== player.heldProp) {
                          player.resolveCollision(prop);
                      }
                  }
             }
 
             for (let i = 0; i < props.length; i++) {
+                if (!props[i]) continue;
                 for (let block of mapBlocks) props[i].resolveCollision(block);
                 
                 for (let j = i + 1; j < props.length; j++) {
-                    props[i].resolveCollision(props[j]);
+                    if (props[j]) {
+                        props[i].resolveCollision(props[j]);
+                    }
                 }
 
                 if (player.heldProp === props[i]) {
                     for (let other of props) {
-                        if (other !== props[i]) {
+                        if (other && other !== props[i]) {
                             props[i].resolveCollision(other);
                         }
                     }
@@ -169,7 +179,7 @@ function loop() {
         ctx.translate(-camera.x, -camera.y);
 
         for (let block of mapBlocks) block.draw(ctx);
-        for (let prop of props) prop.draw(ctx);
+        for (let prop of props) if (prop) prop.draw(ctx);
         player.draw(ctx);
 
         ctx.restore();
