@@ -16,61 +16,75 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-function resolveSpawnOverlaps() {
-    const iterations = 15;
-    
+function init() {
+    const w = CONFIG.mapWidth;
+    const h = CONFIG.mapHeight;
+    const t = 64; 
+
+    mapBlocks.push(new Block(0, 0, w, t, 'tex-brick')); 
+    mapBlocks.push(new Block(0, h - t, w, t, 'tex-brick')); 
+    mapBlocks.push(new Block(0, t, t, h - 2 * t, 'tex-brick')); 
+    mapBlocks.push(new Block(w - t, t, t, h - 2 * t, 'tex-brick')); 
+
+    mapBlocks.push(new Block(300, h - 300, 200, 50, 'tex-brick'));
+    mapBlocks.push(new Block(600, h - 500, 400, 50, 'tex-brick'));
+    mapBlocks.push(new Block(1200, h - 200, 100, 150, 'tex-brick'));
+    mapBlocks.push(new Block(1500, h - 600, 300, 50, 'tex-brick'));
+
+    for(let i=0; i<30; i++) {
+        const type = Math.floor(Math.random() * 6);
+        const px = 100 + Math.random() * (w - 200);
+        const py = h - 200 - Math.random() * 500;
+        props.push(new Prop(px, py, type));
+    }
+
+    resolvePropOverlaps();
+
+    player = new Player(200, h - 200);
+    loop();
+}
+
+function resolvePropOverlaps() {
+    const iterations = 10;
     for (let k = 0; k < iterations; k++) {
-        for (let prop of props) {
-            prop.resolveMapCollision(mapBlocks);
-            
-            for (let other of props) {
-                if (prop !== other) {
-                    prop.resolvePropCollision(other);
+        for (let i = 0; i < props.length; i++) {
+            for (let j = i + 1; j < props.length; j++) {
+                const p1 = props[i];
+                const p2 = props[j];
+                const r1 = getHitbox(p1);
+                const r2 = getHitbox(p2);
+
+                if (checkAABB(r1, r2)) {
+                    const overlapX = (r1.w / 2 + r2.w / 2) - Math.abs((r1.x + r1.w / 2) - (r2.x + r2.w / 2));
+                    const overlapY = (r1.h / 2 + r2.h / 2) - Math.abs((r1.y + r1.h / 2) - (r2.y + r2.h / 2));
+
+                    if (overlapX < overlapY) {
+                        const shift = overlapX / 2 + 1;
+                        if (r1.x < r2.x) { p1.x -= shift; p2.x += shift; }
+                        else { p1.x += shift; p2.x -= shift; }
+                    } else {
+                        const shift = overlapY / 2 + 1;
+                        if (r1.y < r2.y) { p1.y -= shift; p2.y += shift; }
+                        else { p1.y += shift; p2.y -= shift; }
+                    }
                 }
             }
         }
     }
 }
 
-function init() {
-    const roomW = 1200;
-    const roomH = 800;
-    const wallThick = 64;
-
-    mapBlocks.push(new Block(0, 0, roomW, wallThick, 'tex-brick')); 
-    mapBlocks.push(new Block(0, roomH - wallThick, roomW, wallThick, 'tex-brick')); 
-    mapBlocks.push(new Block(0, wallThick, wallThick, roomH - (wallThick*2), 'tex-brick')); 
-    mapBlocks.push(new Block(roomW - wallThick, wallThick, wallThick, roomH - (wallThick*2), 'tex-brick')); 
-
-    mapBlocks.push(new Block(200, 600, 200, 32, 'tex-brick'));
-    mapBlocks.push(new Block(600, 500, 300, 32, 'tex-brick'));
-    mapBlocks.push(new Block(100, 350, 150, 32, 'tex-brick'));
-    mapBlocks.push(new Block(800, 300, 100, 32, 'tex-brick'));
-    
-    props.push(new Prop(300, 500, 0));
-    props.push(new Prop(350, 500, 1));
-    props.push(new Prop(650, 400, 2));
-    props.push(new Prop(750, 400, 3));
-    props.push(new Prop(150, 250, 4));
-    props.push(new Prop(850, 200, 5));
-    props.push(new Prop(500, 700, 0)); 
-    props.push(new Prop(520, 700, 1)); 
-
-    resolveSpawnOverlaps();
-
-    player = new Player(150, 600);
-
-    loop();
-}
-
 function updateCamera() {
     const scale = CONFIG.worldScale;
-    
     const targetX = player.x + player.w / 2;
     const targetY = player.y + player.h / 4; 
 
     camera.x = targetX - (canvas.width / 2) / scale;
     camera.y = targetY - (canvas.height / 2) / scale;
+
+    if (camera.x < 0) camera.x = 0;
+    if (camera.y < 0) camera.y = 0;
+    if (camera.x > CONFIG.mapWidth - canvas.width / scale) camera.x = CONFIG.mapWidth - canvas.width / scale;
+    if (camera.y > CONFIG.mapHeight - canvas.height / scale) camera.y = CONFIG.mapHeight - canvas.height / scale;
 }
 
 function loop() {
@@ -78,29 +92,31 @@ function loop() {
 
     updateCamera();
 
-    const worldMouse = {
-        x: (input.mouse.x / CONFIG.worldScale) + camera.x,
-        y: (input.mouse.y / CONFIG.worldScale) + camera.y
-    };
-
-    player.handleInput(input, worldMouse, props);
+    player.handleInput(input, camera, props);
     player.update();
-    player.resolveMapCollision(mapBlocks);
-
+    
+    player.grounded = false;
+    for (let block of mapBlocks) {
+        player.resolveCollision(block);
+    }
+    
     if (player.isDisguised) {
         for (let prop of props) {
-            player.resolvePropCollision(prop);
+            player.resolveCollision(prop);
         }
     }
 
-    for (let prop of props) {
+    for (let i = 0; i < props.length; i++) {
+        const prop = props[i];
         prop.update();
-        prop.resolveMapCollision(mapBlocks);
+        prop.grounded = false;
         
-        for (let other of props) {
-            if (prop !== other) {
-                prop.resolvePropCollision(other);
-            }
+        for (let block of mapBlocks) {
+            prop.resolveCollision(block);
+        }
+        
+        for (let j = i + 1; j < props.length; j++) {
+            prop.resolveCollision(props[j]);
         }
     }
 
@@ -109,9 +125,7 @@ function loop() {
     ctx.translate(-camera.x, -camera.y);
 
     for (let block of mapBlocks) block.draw(ctx);
-    
     for (let prop of props) prop.draw(ctx);
-    
     player.draw(ctx);
 
     ctx.restore();
