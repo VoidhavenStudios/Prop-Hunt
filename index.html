@@ -5,43 +5,50 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>2D Prop Hunt</title>
     <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;600&display=swap" rel="stylesheet">
 </head>
 <body>
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
-        <div id="ui-layer">
-            <p>Hunter: [1-4] Gun | Click: Shoot | R-Click: Grab | M-Click: Special</p>
-            <p>Prop: Click: Morph | R-Click: Grab | P: Unmorph | M-Click: Taunt</p>
-            <p>ESC: Pause</p>
-        </div>
         <div id="pause-menu" class="hidden">
-            <h1>PAUSED</h1>
-            <button id="btn-resume">Resume</button>
-            <button id="btn-team">Change Team</button>
-            <button id="btn-settings">Settings</button>
-            <button id="btn-exit">Exit Game</button>
+            <div class="menu-box">
+                <h1>PAUSED</h1>
+                <div class="controls-info">
+                    <div class="team-info">
+                        <h3>HUNTER</h3>
+                        <p>[1-4] Switch Gun | L-Click: Shoot</p>
+                        <p>R-Click: Grab Prop | M-Click: Special</p>
+                    </div>
+                    <div class="team-info">
+                        <h3>PROP</h3>
+                        <p>L-Click: Morph | R-Click: Grab Prop</p>
+                        <p>P: Unmorph | M-Click: Taunt</p>
+                    </div>
+                </div>
+                <button id="btn-resume">RESUME</button>
+                <button id="btn-team">CHANGE TEAM</button>
+                <button id="btn-settings">SETTINGS</button>
+                <button id="btn-exit">RESTART</button>
+            </div>
         </div>
     </div>
 
-    <!-- Assets -->
     <div style="display:none;">
         <img id="tex-player" src="assets/player/default.png">
         <img id="tex-brick" src="assets/map/brick.png">
-        
         <img id="tex-crate0" src="assets/props/crate0.png">
         <img id="tex-crate1" src="assets/props/crate1.png">
         <img id="tex-crate2" src="assets/props/crate2.png">
         <img id="tex-crate3" src="assets/props/crate3.png">
         <img id="tex-crate4" src="assets/props/crate4.png">
         <img id="tex-crate5" src="assets/props/crate5.png">
-
         <img id="tex-gun0" src="assets/gun/revolver0.png">
         <img id="tex-gun1" src="assets/gun/pistol0.png">
         <img id="tex-gun2" src="assets/gun/rifle0.png">
         <img id="tex-gun3" src="assets/gun/shotgun0.png">
     </div>
 
-    <!-- Scripts -->
+    <script src="js/config.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/input.js"></script>
     <script src="js/physics.js"></script>
@@ -49,6 +56,7 @@
     <script src="js/player.js"></script>
     <script src="js/hunter.js"></script>
     <script src="js/prop.js"></script>
+    <script src="js/menu.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
