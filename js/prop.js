@@ -3,6 +3,7 @@ class PropPlayer extends BasePlayer {
         super(x, y);
         this.isDisguised = false;
         this.currentImage = this.originalImage;
+        this.fixedRotation = true;
     }
 
     handleSpecificInput(input, entities) {
@@ -12,9 +13,6 @@ class PropPlayer extends BasePlayer {
 
         if (input.mouse.leftPressed) {
             this.tryMorph(entities);
-        }
-
-        if (input.mouse.middleDown) {
         }
     }
 
@@ -36,7 +34,8 @@ class PropPlayer extends BasePlayer {
         this.h = targetProp.image.height;
         this.box = { ...targetProp.box };
         this.y -= 10;
-        this.angle = 0;
+        this.angle = targetProp.angle;
+        this.fixedRotation = false; // Enable rotation when prop
     }
 
     resetDisguise() {
@@ -47,12 +46,19 @@ class PropPlayer extends BasePlayer {
         this.setHitboxFromImage(this.originalImage);
         this.y -= 10;
         this.angle = 0;
+        this.fixedRotation = true; // Disable rotation when human
     }
 
     draw(ctx) {
         ctx.save();
         ctx.translate(this.x + this.box.x + this.box.w / 2, this.y + this.box.y + this.box.h / 2);
-        if (!this.facingRight) ctx.scale(-1, 1);
+        
+        if (!this.isDisguised) {
+             if (!this.facingRight) ctx.scale(-1, 1);
+        } else {
+             ctx.rotate(this.angle);
+        }
+
         ctx.drawImage(this.currentImage, -this.box.w / 2 - this.box.x, -this.box.h / 2 - this.box.y);
         ctx.restore();
         
