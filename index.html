@@ -3,30 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2D Prop Hunt Test</title>
+    <title>2D Prop Hunt</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         <div id="ui-layer">
-            <p>WASD: Move/Jump | Left Click: Become Prop | Right Click: Reset to Player</p>
+            <p>Hunter: [1-4] Gun | Click: Shoot | R-Click: Grab | M-Click: Special</p>
+            <p>Prop: Click: Morph | R-Click: Grab | P: Unmorph | M-Click: Taunt</p>
+            <p>ESC: Pause</p>
+        </div>
+        <div id="pause-menu" class="hidden">
+            <h1>PAUSED</h1>
+            <button id="btn-resume">Resume</button>
+            <button id="btn-team">Change Team</button>
+            <button id="btn-settings">Settings</button>
+            <button id="btn-exit">Exit Game</button>
         </div>
     </div>
 
-    <img id="tex-player" src="assets/player/default.png" style="display:none;">
-    <img id="tex-brick" src="assets/map/brick.png" style="display:none;">
-    <img id="tex-crate0" src="assets/props/crate0.png" style="display:none;">
-    <img id="tex-crate1" src="assets/props/crate1.png" style="display:none;">
-    <img id="tex-crate2" src="assets/props/crate2.png" style="display:none;">
-    <img id="tex-crate3" src="assets/props/crate3.png" style="display:none;">
-    <img id="tex-crate4" src="assets/props/crate4.png" style="display:none;">
-    <img id="tex-crate5" src="assets/props/crate5.png" style="display:none;">
+    <!-- Assets -->
+    <div style="display:none;">
+        <img id="tex-player" src="assets/player/default.png">
+        <img id="tex-brick" src="assets/map/brick.png">
+        
+        <img id="tex-crate0" src="assets/props/crate0.png">
+        <img id="tex-crate1" src="assets/props/crate1.png">
+        <img id="tex-crate2" src="assets/props/crate2.png">
+        <img id="tex-crate3" src="assets/props/crate3.png">
+        <img id="tex-crate4" src="assets/props/crate4.png">
+        <img id="tex-crate5" src="assets/props/crate5.png">
 
+        <img id="tex-gun0" src="assets/gun/revolver0.png">
+        <img id="tex-gun1" src="assets/gun/pistol0.png">
+        <img id="tex-gun2" src="assets/gun/rifle0.png">
+        <img id="tex-gun3" src="assets/gun/shotgun0.png">
+    </div>
+
+    <!-- Scripts -->
     <script src="js/utils.js"></script>
     <script src="js/input.js"></script>
     <script src="js/physics.js"></script>
     <script src="js/entities.js"></script>
+    <script src="js/player.js"></script>
+    <script src="js/hunter.js"></script>
+    <script src="js/prop.js"></script>
     <script src="js/main.js"></script>
 </body>
 </html>
