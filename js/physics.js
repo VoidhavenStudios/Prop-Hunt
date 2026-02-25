@@ -19,12 +19,22 @@ class PhysicsBody {
         if (!this.isStatic) {
             if (!this.isHeld) {
                 this.vy += CONFIG.gravity;
-                const friction = this.grounded ? CONFIG.groundFriction : CONFIG.airFriction;
-                this.vx *= friction;
                 
                 if (!this.fixedRotation) {
-                    this.angularVelocity *= CONFIG.angularDrag;
-                    if (Math.abs(this.angularVelocity) < 0.001) this.angularVelocity = 0;
+                    if (this.grounded) {
+                        this.angularVelocity *= 0.75;
+                        if (Math.abs(this.angularVelocity) < 0.03) {
+                            const snap = Math.round(this.angle / (Math.PI / 2)) * (Math.PI / 2);
+                            this.angle += (snap - this.angle) * 0.3;
+                            if (Math.abs(this.angle - snap) < 0.01) {
+                                this.angle = snap;
+                                this.angularVelocity = 0;
+                            }
+                        }
+                    } else {
+                        this.angularVelocity *= CONFIG.angularDrag;
+                    }
+
                     if (this.angularVelocity > CONFIG.maxAngularVelocity) this.angularVelocity = CONFIG.maxAngularVelocity;
                     if (this.angularVelocity < -CONFIG.maxAngularVelocity) this.angularVelocity = -CONFIG.maxAngularVelocity;
                     this.angle += this.angularVelocity;
@@ -139,15 +149,20 @@ class PhysicsBody {
 
         const dot = this.vx * normal.x + this.vy * normal.y;
         if (dot < 0) {
-            const restitution = 0.2;
+            const restitution = 0.1;
             const impulse = dot * (1 + restitution);
             this.vx -= impulse * normal.x;
             this.vy -= impulse * normal.y;
         }
 
-        if (!this.fixedRotation && !this.isHeld && Math.abs(dot) > 1.0) {
-            const torque = (normal.x * this.vy - normal.y * this.vx) * 0.005;
-            this.angularVelocity += torque;
+        if (!this.fixedRotation && !this.isHeld) {
+            if (Math.abs(normal.x) > 0.5 && Math.abs(dot) > 2.0) {
+                const torque = normal.x * this.vy * 0.005;
+                this.angularVelocity += torque;
+            } else if (!this.grounded && Math.abs(normal.y) > 0.5 && Math.abs(dot) > 2.0) {
+                const torque = -normal.y * this.vx * 0.005;
+                this.angularVelocity += torque;
+            }
         }
     }
 }
