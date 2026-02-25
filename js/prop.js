@@ -12,6 +12,8 @@ export class PropPlayer extends BasePlayer {
     }
 
     handleSpecificInput(input, entities) {
+        if (!input) return;
+
         if (input.keys['KeyP']) {
             this.resetDisguise();
         }
@@ -22,8 +24,11 @@ export class PropPlayer extends BasePlayer {
     }
 
     tryMorph(props) {
+        if (!props || !this.cursor) return;
         for (let prop of props) {
-            if (pointInPolygon(this.cursor, prop.getVertices())) {
+            if (!prop) continue;
+            const v = prop.getVertices();
+            if (v && pointInPolygon(this.cursor, v)) {
                 if (prop !== this.heldProp) {
                     this.becomeProp(prop);
                 }
@@ -33,6 +38,7 @@ export class PropPlayer extends BasePlayer {
     }
 
     becomeProp(targetProp) {
+        if (!targetProp || !targetProp.image || !targetProp.box) return;
         this.isDisguised = true;
         this.currentImage = targetProp.image;
         this.w = targetProp.image.width;
@@ -40,7 +46,7 @@ export class PropPlayer extends BasePlayer {
         this.box = { ...targetProp.box };
         this.localVertices = targetProp.localVertices ? [...targetProp.localVertices] : null;
         this.y -= 10;
-        this.angle = targetProp.angle;
+        this.angle = targetProp.angle || 0;
         this.fixedRotation = false; 
         this.mass = targetProp.mass;
         this.invMass = targetProp.invMass;
@@ -51,8 +57,10 @@ export class PropPlayer extends BasePlayer {
     resetDisguise() {
         this.isDisguised = false;
         this.currentImage = this.originalImage;
-        this.w = this.originalImage.width;
-        this.h = this.originalImage.height;
+        if (this.originalImage) {
+            this.w = this.originalImage.width;
+            this.h = this.originalImage.height;
+        }
         this.box = { ...this.defaultBox };
         this.localVertices = this.defaultLocalVertices ? [...this.defaultLocalVertices] : null;
         this.y -= 10;
@@ -66,6 +74,7 @@ export class PropPlayer extends BasePlayer {
     }
 
     draw(ctx) {
+        if (!this.box || !this.currentImage) return;
         ctx.save();
         ctx.translate(this.x + this.box.x + this.box.w / 2, this.y + this.box.y + this.box.h / 2);
         if (!this.isDisguised && !this.facingRight) ctx.scale(-1, 1);
