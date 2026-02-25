@@ -34,6 +34,54 @@ function calculateTightHitbox(img) {
     }
 }
 
+function crossProduct(o, a, b) {
+    return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+}
+
+function convexHull(points) {
+    points.sort((a, b) => a.x === b.x ? a.y - b.y : a.x - b.x);
+    const lower = [];
+    for (let i = 0; i < points.length; i++) {
+        while (lower.length >= 2 && crossProduct(lower[lower.length - 2], lower[lower.length - 1], points[i]) <= 0) {
+            lower.pop();
+        }
+        lower.push(points[i]);
+    }
+    const upper = [];
+    for (let i = points.length - 1; i >= 0; i--) {
+        while (upper.length >= 2 && crossProduct(upper[upper.length - 2], upper[upper.length - 1], points[i]) <= 0) {
+            upper.pop();
+        }
+        upper.push(points[i]);
+    }
+    upper.pop();
+    lower.pop();
+    return lower.concat(upper);
+}
+
+function calculateConvexHullFromImage(img) {
+    const c = document.createElement('canvas');
+    c.width = img.width;
+    c.height = img.height;
+    const cx = c.getContext('2d');
+    cx.drawImage(img, 0, 0);
+    const points = [];
+    try {
+        const data = cx.getImageData(0, 0, c.width, c.height).data;
+        for (let y = 0; y < c.height; y++) {
+            for (let x = 0; x < c.width; x++) {
+                if (data[(y * c.width + x) * 4 + 3] > 0) {
+                    points.push({ x, y });
+                }
+            }
+        }
+        if (points.length === 0) return null;
+        return convexHull(points);
+    } catch (e) {
+        return null;
+    }
+}
+
 function getAxes(vertices) {
     const axes = [];
     for (let i = 0; i < vertices.length; i++) {
@@ -67,4 +115,13 @@ function pointInPolygon(point, vertices) {
         if (intersect) inside = !inside;
     }
     return inside;
+}
+
+function checkAABB(rect1, rect2) {
+    return (
+        rect1.x < rect2.x + rect2.w &&
+        rect1.x + rect1.w > rect2.x &&
+        rect1.y < rect2.y + rect2.h &&
+        rect1.y + rect1.h > rect2.y
+    );
 }
