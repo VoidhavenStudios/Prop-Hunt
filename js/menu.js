@@ -1,4 +1,4 @@
-class MenuController {
+export class MenuController {
     constructor(inputHandler, toggleTeamCallback, spawnPlayerCallback) {
         this.menuEl = document.getElementById('pause-menu');
         this.btnResume = document.getElementById('btn-resume');
