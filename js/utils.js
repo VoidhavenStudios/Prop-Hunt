@@ -1,18 +1,16 @@
 const CONFIG = {
-    gravity: 0.8,
+    gravity: 1.5,
     friction: 0.90,
-    groundFriction: 0.85,
+    groundFriction: 0.80,
     airFriction: 0.98,
     speed: 5,
-    baseJumpForce: 16,
-    reachDistance: 700,
+    baseJumpForce: 24.0,
+    reachDistance: 800,
     worldScale: 0.5,
     mapWidth: 4000,
     mapHeight: 3000,
     angularDrag: 0.85,
-    maxAngularVelocity: 0.15,
-    holdSpringStrength: 0.15,
-    holdDamping: 0.8
+    maxAngularVelocity: 0.15
 };
 
 function getHitbox(entity) {
