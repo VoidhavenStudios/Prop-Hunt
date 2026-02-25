@@ -1,7 +1,7 @@
 class InputHandler {
     constructor(canvas) {
         this.keys = {};
-        this.mouse = { x: 0, y: 0, leftDown: false, rightDown: false, middleDown: false };
+        this.mouse = { x: 0, y: 0, leftDown: false, rightDown: false, middleDown: false, rightPressed: false, leftPressed: false };
         this.canvas = canvas;
         this.onPauseToggle = null;
 
@@ -23,12 +23,18 @@ class InputHandler {
         });
 
         window.addEventListener('mousedown', (e) => {
-            if (e.button === 0) this.mouse.leftDown = true;
+            if (e.button === 0) {
+                this.mouse.leftDown = true;
+                this.mouse.leftPressed = true;
+            }
             if (e.button === 1) { 
                 this.mouse.middleDown = true; 
                 e.preventDefault(); 
             }
-            if (e.button === 2) this.mouse.rightDown = true;
+            if (e.button === 2) {
+                this.mouse.rightDown = true;
+                this.mouse.rightPressed = true;
+            }
         });
 
         window.addEventListener('mouseup', (e) => {
@@ -39,5 +45,10 @@ class InputHandler {
 
         canvas.addEventListener('contextmenu', e => e.preventDefault());
         window.addEventListener('wheel', e => { if(e.ctrlKey) e.preventDefault(); }, {passive: false});
+    }
+
+    resetPressed() {
+        this.mouse.rightPressed = false;
+        this.mouse.leftPressed = false;
     }
 }
