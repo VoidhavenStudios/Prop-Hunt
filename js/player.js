@@ -7,6 +7,7 @@ class BasePlayer extends PhysicsBody {
         this.facingRight = true;
         this.cursor = { x: 0, y: 0 };
         this.heldProp = null;
+        this.fixedRotation = true; 
     }
 
     commonInput(input, camera, props) {
@@ -61,20 +62,20 @@ class BasePlayer extends PhysicsBody {
         }
 
         if (this.heldProp) {
+            // Spring physics for holding
             const targetX = this.cursor.x - this.heldProp.box.w / 2 - this.heldProp.box.x;
             const targetY = this.cursor.y - this.heldProp.box.h / 2 - this.heldProp.box.y;
-
-            this.heldProp.vx = (targetX - this.heldProp.x) * 0.3;
-            this.heldProp.vy = (targetY - this.heldProp.y) * 0.3;
             
-            const maxSpeed = 25;
-            const speed = Math.sqrt(this.heldProp.vx ** 2 + this.heldProp.vy ** 2);
-            if (speed > maxSpeed) {
-                this.heldProp.vx = (this.heldProp.vx / speed) * maxSpeed;
-                this.heldProp.vy = (this.heldProp.vy / speed) * maxSpeed;
-            }
+            const dx = targetX - this.heldProp.x;
+            const dy = targetY - this.heldProp.y;
 
-            this.heldProp.angularVelocity *= 0.5;
+            this.heldProp.vx += dx * CONFIG.holdSpringStrength;
+            this.heldProp.vy += dy * CONFIG.holdSpringStrength;
+
+            this.heldProp.vx *= CONFIG.holdDamping;
+            this.heldProp.vy *= CONFIG.holdDamping;
+            
+            this.heldProp.angularVelocity *= 0.8; 
         }
     }
 
