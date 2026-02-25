@@ -6,4 +6,4 @@ export const PROP_TYPES = {
     4: { imgId: 'tex-crate4', mass: 15 },
     5: { imgId: 'tex-crate5', mass: 15 }
 };
-console.info("PROP_TYPES loaded", PROP_TYPES);
+console.info("PROP_TYPES loaded");
