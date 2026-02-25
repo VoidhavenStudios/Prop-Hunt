@@ -1,4 +1,4 @@
-function getHitbox(entity) {
+export function getHitbox(entity) {
     return {
         x: entity.x + entity.box.x,
         y: entity.y + entity.box.y,
@@ -7,7 +7,7 @@ function getHitbox(entity) {
     };
 }
 
-function calculateTightHitbox(img) {
+export function calculateTightHitbox(img) {
     const c = document.createElement('canvas');
     c.width = img.width;
     c.height = img.height;
@@ -34,11 +34,11 @@ function calculateTightHitbox(img) {
     }
 }
 
-function crossProduct(o, a, b) {
+export function crossProduct(o, a, b) {
     return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
 }
 
-function convexHull(points) {
+export function convexHull(points) {
     points.sort((a, b) => a.x === b.x ? a.y - b.y : a.x - b.x);
     const lower = [];
     for (let i = 0; i < points.length; i++) {
@@ -66,7 +66,7 @@ function convexHull(points) {
     return simplified.length >= 3 ? simplified : fullHull;
 }
 
-function calculateConvexHullFromImage(img) {
+export function calculateConvexHullFromImage(img) {
     const c = document.createElement('canvas');
     c.width = img.width;
     c.height = img.height;
@@ -89,7 +89,7 @@ function calculateConvexHullFromImage(img) {
     }
 }
 
-function getAxes(vertices) {
+export function getAxes(vertices) {
     const axes = [];
     for (let i = 0; i < vertices.length; i++) {
         const p1 = vertices[i];
@@ -101,7 +101,7 @@ function getAxes(vertices) {
     return axes;
 }
 
-function project(vertices, axis) {
+export function project(vertices, axis) {
     let min = Infinity, max = -Infinity;
     for (const v of vertices) {
         const proj = v.x * axis.x + v.y * axis.y;
@@ -111,7 +111,7 @@ function project(vertices, axis) {
     return { min, max };
 }
 
-function pointInPolygon(point, vertices) {
+export function pointInPolygon(point, vertices) {
     let inside = false;
     for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
         const xi = vertices[i].x, yi = vertices[i].y;
@@ -123,7 +123,7 @@ function pointInPolygon(point, vertices) {
     return inside;
 }
 
-function checkAABB(rect1, rect2) {
+export function checkAABB(rect1, rect2) {
     return (
         rect1.x < rect2.x + rect2.w &&
         rect1.x + rect1.w > rect2.x &&
@@ -132,7 +132,7 @@ function checkAABB(rect1, rect2) {
     );
 }
 
-function findContactPoint(v1, v2, body1, body2) {
+export function findContactPoint(v1, v2, body1, body2) {
     let cx = 0, cy = 0, count = 0;
     for (let p of v1) {
         if (pointInPolygon(p, v2)) { cx += p.x; cy += p.y; count++; }
