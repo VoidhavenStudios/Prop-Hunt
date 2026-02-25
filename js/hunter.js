@@ -2,38 +2,29 @@ import { BasePlayer } from './player.js';
 export class HunterPlayer extends BasePlayer {
     constructor(x, y) {
         super(x, y);
-        console.info("Initializing HunterPlayer");
         this.guns = [
             document.getElementById('tex-gun0'),
             document.getElementById('tex-gun1'),
             document.getElementById('tex-gun2'),
             document.getElementById('tex-gun3')
         ];
-        this.guns.forEach((gun, idx) => {
-            if (!gun) console.error(`Hunter gun texture index ${idx} not found!`);
-        });
         this.currentGunIndex = 0;
     }
     handleSpecificInput(input, entities) {
         if (!input) return;
-        let oldIndex = this.currentGunIndex;
         if (input.keys['Digit1']) this.currentGunIndex = 0;
         if (input.keys['Digit2']) this.currentGunIndex = 1;
         if (input.keys['Digit3']) this.currentGunIndex = 2;
         if (input.keys['Digit4']) this.currentGunIndex = 3;
-        if (oldIndex !== this.currentGunIndex) {
-            console.info(`Hunter switched to gun index ${this.currentGunIndex}`);
-        }
     }
     draw(ctx) {
         ctx.save();
         ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
         if (!this.facingRight) ctx.scale(-1, 1);
-        if (this.originalImage) ctx.drawImage(this.originalImage, -this.w / 2, -this.h / 2);
+        ctx.drawImage(this.originalImage, -this.w / 2, -this.h / 2);
         ctx.restore();
         const gunImg = this.guns[this.currentGunIndex];
         if (!gunImg) {
-            console.error(`Current gun image missing for index ${this.currentGunIndex}`);
             this.drawCursor(ctx);
             return;
         }
