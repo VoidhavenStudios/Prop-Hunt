@@ -15,12 +15,15 @@ class PhysicsBody {
     }
 
     update() {
-        if (!this.isStatic && !this.isHeld) {
-            this.vy += CONFIG.gravity;
+        if (!this.isStatic) {
+            if (!this.isHeld) {
+                this.vy += CONFIG.gravity;
+            }
             const friction = this.grounded ? CONFIG.groundFriction : CONFIG.airFriction;
             this.vx *= friction;
             
             this.angularVelocity *= CONFIG.angularDrag;
+            if (Math.abs(this.angularVelocity) < 0.001) this.angularVelocity = 0;
             if (this.angularVelocity > CONFIG.maxAngularVelocity) this.angularVelocity = CONFIG.maxAngularVelocity;
             if (this.angularVelocity < -CONFIG.maxAngularVelocity) this.angularVelocity = -CONFIG.maxAngularVelocity;
 
@@ -56,8 +59,6 @@ class PhysicsBody {
     }
 
     resolveCollision(other) {
-        if (this.isHeld || other.isHeld) return false;
-
         const v1 = this.getVertices();
         const v2 = other.getVertices();
         const axes = getAxes(v1).concat(getAxes(v2));
@@ -101,11 +102,14 @@ class PhysicsBody {
             other.y -= mtv.y * minOverlap;
             other.applyCollisionResponse({ x: -mtv.x, y: -mtv.y }, this);
         } else if (!this.isStatic && !other.isStatic) {
-            const shift = minOverlap / 2;
-            this.x += mtv.x * shift;
-            this.y += mtv.y * shift;
-            other.x -= mtv.x * shift;
-            other.y -= mtv.y * shift;
+            const massRatio = this.isHeld ? 0 : (other.isHeld ? 1 : 0.5);
+            const thisShift = minOverlap * (1 - massRatio);
+            const otherShift = minOverlap * massRatio;
+            
+            this.x += mtv.x * thisShift;
+            this.y += mtv.y * thisShift;
+            other.x -= mtv.x * otherShift;
+            other.y -= mtv.y * otherShift;
             this.applyCollisionResponse(mtv, other);
             other.applyCollisionResponse({ x: -mtv.x, y: -mtv.y }, this);
         }
@@ -114,18 +118,22 @@ class PhysicsBody {
     }
 
     applyCollisionResponse(normal, other) {
-        if (normal.y < -0.5) this.grounded = true;
+        if (normal.y < -0.5) {
+            this.grounded = true;
+        }
 
         const dot = this.vx * normal.x + this.vy * normal.y;
         if (dot < 0) {
-            this.vx -= dot * normal.x * 1.5;
-            this.vy -= dot * normal.y * 1.5;
+            this.vx -= dot * normal.x * 1.2;
+            this.vy -= dot * normal.y * 1.2;
         }
 
-        if (Math.abs(normal.x) > Math.abs(normal.y)) {
-            this.angularVelocity -= this.vy * 0.005 * Math.sign(normal.x);
-        } else {
-            this.angularVelocity += this.vx * 0.005 * Math.sign(normal.y);
+        if (!this.isHeld && Math.abs(dot) > 1.0) {
+            if (Math.abs(normal.y) > 0.5) {
+                this.angularVelocity += this.vx * 0.01 * normal.y;
+            } else if (Math.abs(normal.x) > 0.5) {
+                this.angularVelocity -= this.vy * 0.01 * normal.x;
+            }
         }
     }
 }
