@@ -3,15 +3,15 @@ import { calculateTightHitbox, calculateConvexHullFromImage, getAxes, project, f
 
 export class PhysicsBody {
     constructor(x, y, w, h, isStatic) {
-        this.x = x;
-        this.y = y;
-        this.w = w;
-        this.h = h;
+        this.x = x || 0;
+        this.y = y || 0;
+        this.w = w || 0;
+        this.h = h || 0;
         this.vx = 0;
         this.vy = 0;
         this.isStatic = isStatic;
         this.grounded = false;
-        this.box = { x: 0, y: 0, w: w, h: h };
+        this.box = { x: 0, y: 0, w: this.w, h: this.h };
         this.localVertices = null;
         this.angle = 0;
         this.angularVelocity = 0;
@@ -20,7 +20,7 @@ export class PhysicsBody {
         
         this.mass = isStatic ? 0 : CONFIG.propMass;
         this.invMass = isStatic ? 0 : 1 / this.mass;
-        this.inertia = isStatic ? 0 : (this.mass * (w * w + h * h)) / 12;
+        this.inertia = isStatic ? 0 : (this.mass * (this.w * this.w + this.h * this.h)) / 12;
         this.invInertia = isStatic ? 0 : 1 / this.inertia;
     }
 
@@ -56,6 +56,7 @@ export class PhysicsBody {
     }
 
     setHitboxFromImage(img) {
+        if (!img) return;
         this.box = calculateTightHitbox(img);
         const hull = calculateConvexHullFromImage(img);
         if (hull) {
@@ -91,10 +92,12 @@ export class PhysicsBody {
     }
 
     resolveCollision(other) {
-        if (this.isStatic && other.isStatic) return false;
+        if (!other || (this.isStatic && other.isStatic)) return false;
 
         const v1 = this.getVertices();
         const v2 = other.getVertices();
+        if (!v1 || !v2) return false;
+
         const axes = getAxes(v1).concat(getAxes(v2));
 
         let minOverlap = Infinity;
