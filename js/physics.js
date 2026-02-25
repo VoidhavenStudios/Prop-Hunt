@@ -1,9 +1,7 @@
 import { CONFIG } from './config.js';
 import { calculateTightHitbox, calculateConvexHullFromImage, getAxes, project, findContactPoint } from './math.js';
-
 export class PhysicsBody {
     constructor(x, y, w, h, isStatic) {
-        console.debug(`Creating PhysicsBody at (${x},${y}) static: ${isStatic}`);
         this.x = x || 0;
         this.y = y || 0;
         this.w = w || 0;
@@ -18,7 +16,7 @@ export class PhysicsBody {
         this.angularVelocity = 0;
         this.isHeld = false;
         this.fixedRotation = isStatic;
-        this.mass = isStatic ? 0 : CONFIG.propMass;
+        this.mass = isStatic ? 0 : CONFIG.defaultPropMass;
         this.invMass = isStatic ? 0 : 1 / this.mass;
         this.inertia = isStatic ? 0 : (this.mass * (this.w * this.w + this.h * this.h)) / 12;
         this.invInertia = isStatic ? 0 : 1 / this.inertia;
@@ -50,19 +48,13 @@ export class PhysicsBody {
         }
     }
     setHitboxFromImage(img) {
-        if (!img) {
-            console.error("setHitboxFromImage called with null image");
-            return;
-        }
-        console.debug("Setting hitbox from image", img.id);
+        if (!img) return;
         this.box = calculateTightHitbox(img);
         const hull = calculateConvexHullFromImage(img);
         if (hull) {
             const cx = this.box.x + this.box.w / 2;
             const cy = this.box.y + this.box.h / 2;
             this.localVertices = hull.map(p => ({ x: p.x - cx, y: p.y - cy }));
-        } else {
-            console.warn("Failed to generate convex hull for image", img.id);
         }
     }
     getVertices() {
@@ -82,10 +74,7 @@ export class PhysicsBody {
         if (!other || (this.isStatic && other.isStatic)) return false;
         const v1 = this.getVertices();
         const v2 = other.getVertices();
-        if (!v1 || !v2) {
-            console.warn("resolveCollision aborted: Missing vertices");
-            return false;
-        }
+        if (!v1 || !v2) return false;
         const axes = getAxes(v1).concat(getAxes(v2));
         let minOverlap = Infinity;
         let mtv = null;
