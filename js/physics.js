@@ -8,7 +8,7 @@ class PhysicsBody {
         this.vy = 0;
         this.isStatic = isStatic;
         this.grounded = false;
-        this.hitboxOffset = { x: 0, y: 0 }; 
+        this.box = { x: 0, y: 0, w: w, h: h };
     }
 
     update() {
@@ -21,54 +21,67 @@ class PhysicsBody {
         }
     }
 
-    resolveMapCollision(mapBlocks) {
-        this.grounded = false;
-        for (let block of mapBlocks) {
-            if (checkAABB(this, block)) {
-                let overlapX = (this.w / 2 + block.w / 2) - Math.abs((this.x + this.w / 2) - (block.x + block.w / 2));
-                let overlapY = (this.h / 2 + block.h / 2) - Math.abs((this.y + this.h / 2) - (block.y + block.h / 2));
+    calculateTightHitbox(img) {
+        const c = document.createElement('canvas');
+        c.width = img.width;
+        c.height = img.height;
+        const cx = c.getContext('2d');
+        cx.drawImage(img, 0, 0);
 
-                if (overlapX < overlapY) {
-                    if (this.x < block.x) this.x -= overlapX;
-                    else this.x += overlapX;
-                    this.vx = 0;
-                } else {
-                    if (this.y < block.y) {
-                        this.y -= overlapY;
-                        this.grounded = true;
-                    } else {
-                        this.y += overlapY;
+        try {
+            const data = cx.getImageData(0, 0, c.width, c.height).data;
+            let minX = c.width, minY = c.height, maxX = 0, maxY = 0;
+            let found = false;
+
+            for (let y = 0; y < c.height; y++) {
+                for (let x = 0; x < c.width; x++) {
+                    const alpha = data[(y * c.width + x) * 4 + 3];
+                    if (alpha > 0) {
+                        if (x < minX) minX = x;
+                        if (x > maxX) maxX = x;
+                        if (y < minY) minY = y;
+                        if (y > maxY) maxY = y;
+                        found = true;
                     }
-                    this.vy = 0;
                 }
             }
+
+            if (found) {
+                this.box = {
+                    x: minX,
+                    y: minY,
+                    w: maxX - minX + 1,
+                    h: maxY - minY + 1
+                };
+            }
+        } catch (e) {
+            this.box = { x: 0, y: 0, w: this.w, h: this.h };
         }
     }
 
-    resolvePropCollision(otherProp) {
-        if (checkAABB(this, otherProp)) {
-            let overlapX = (this.w / 2 + otherProp.w / 2) - Math.abs((this.x + this.w / 2) - (otherProp.x + otherProp.w / 2));
-            let overlapY = (this.h / 2 + otherProp.h / 2) - Math.abs((this.y + this.h / 2) - (otherProp.y + otherProp.h / 2));
+    resolveCollision(other) {
+        const r1 = getHitbox(this);
+        const r2 = getHitbox(other);
+
+        if (checkAABB(r1, r2)) {
+            let overlapX = (r1.w / 2 + r2.w / 2) - Math.abs((r1.x + r1.w / 2) - (r2.x + r2.w / 2));
+            let overlapY = (r1.h / 2 + r2.h / 2) - Math.abs((r1.y + r1.h / 2) - (r2.y + r2.h / 2));
 
             if (overlapX < overlapY) {
-                if (Math.abs(this.vx) > Math.abs(otherProp.vx)) {
-                    if (this.x < otherProp.x) this.x -= overlapX * 0.5;
-                    else this.x += overlapX * 0.5;
-                    if (!otherProp.isStatic) {
-                        if (this.x < otherProp.x) otherProp.x += overlapX * 0.5;
-                        else otherProp.x -= overlapX * 0.5;
-                    }
-                }
-                this.vx *= 0.5;
+                if (r1.x < r2.x) this.x -= overlapX;
+                else this.x += overlapX;
+                this.vx = 0;
             } else {
-                if (this.y < otherProp.y) {
+                if (r1.y < r2.y) {
                     this.y -= overlapY;
                     this.grounded = true;
                 } else {
                     this.y += overlapY;
                 }
-                this.vy *= 0.5;
+                this.vy = 0;
             }
+            return true;
         }
+        return false;
     }
 }
