@@ -180,5 +180,26 @@ function loop() {
 }
 
 window.onload = () => {
-    setTimeout(init, 200); 
+    const images = document.querySelectorAll('img');
+    let loadedCount = 0;
+    
+    const checkInit = () => {
+        loadedCount++;
+        if (loadedCount === images.length) {
+            init();
+        }
+    };
+
+    if (images.length === 0) {
+        init();
+    } else {
+        images.forEach(img => {
+            if (img.complete && img.naturalHeight !== 0) {
+                checkInit();
+            } else {
+                img.addEventListener('load', checkInit);
+                img.addEventListener('error', checkInit); 
+            }
+        });
+    }
 };
