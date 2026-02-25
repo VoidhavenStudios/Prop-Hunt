@@ -6,9 +6,10 @@ class BasePlayer extends PhysicsBody {
         this.setHitboxFromImage(img);
         this.facingRight = true;
         this.cursor = { x: 0, y: 0 };
+        this.heldProp = null;
     }
 
-    commonInput(input, camera) {
+    commonInput(input, camera, props) {
         if (input.keys['KeyA'] || input.keys['ArrowLeft']) {
             this.vx -= 1;
         }
@@ -16,7 +17,11 @@ class BasePlayer extends PhysicsBody {
             this.vx += 1;
         }
         if ((input.keys['KeyW'] || input.keys['ArrowUp'] || input.keys['Space']) && this.grounded) {
-            this.vy = -CONFIG.baseJumpForce;
+            let bonus = 0;
+            if (this.isDisguised) {
+                bonus = this.h * 0.05;
+            }
+            this.vy = -(CONFIG.baseJumpForce + bonus);
             this.grounded = false;
         }
         
@@ -25,7 +30,6 @@ class BasePlayer extends PhysicsBody {
 
         this.facingRight = worldMouseX > (this.x + this.w / 2);
 
-        // Cursor logic
         const centerX = this.x + this.w / 2;
         const centerY = this.y + this.h / 2;
         const dx = worldMouseX - centerX;
@@ -40,6 +44,36 @@ class BasePlayer extends PhysicsBody {
             this.cursor.x = worldMouseX;
             this.cursor.y = worldMouseY;
         }
+
+        if (input.mouse.rightPressed) {
+            if (this.heldProp) {
+                this.heldProp.isHeld = false;
+                this.heldProp = null;
+            } else {
+                for (let prop of props) {
+                    if (pointInPolygon(this.cursor, prop.getVertices())) {
+                        this.heldProp = prop;
+                        this.heldProp.isHeld = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (this.heldProp) {
+            const px = this.heldProp.x;
+            const py = this.heldProp.y;
+            
+            const targetX = this.cursor.x - this.heldProp.box.w / 2 - this.heldProp.box.x;
+            const targetY = this.cursor.y - this.heldProp.box.h / 2 - this.heldProp.box.y;
+
+            this.heldProp.x += (targetX - this.heldProp.x) * 0.5;
+            this.heldProp.y += (targetY - this.heldProp.y) * 0.5;
+
+            this.heldProp.vx = this.heldProp.x - px;
+            this.heldProp.vy = this.heldProp.y - py;
+            this.heldProp.angularVelocity = 0;
+        }
     }
 
     drawCursor(ctx) {
@@ -49,6 +83,5 @@ class BasePlayer extends PhysicsBody {
         ctx.fill();
     }
     
-    // Abstract
     handleSpecificInput(input, entities) {}
 }
