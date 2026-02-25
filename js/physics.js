@@ -113,6 +113,8 @@ export class PhysicsBody {
             }
         }
 
+        if (!mtv) return false;
+
         const cx1 = this.x + this.box.x + this.box.w / 2;
         const cy1 = this.y + this.box.y + this.box.h / 2;
         const cx2 = other.x + other.box.x + other.box.w / 2;
