@@ -1,5 +1,6 @@
 import { CONFIG } from './config.js';
 import { PhysicsBody } from './physics.js';
+import { PROP_TYPES } from './objects.js';
 
 export class Block extends PhysicsBody {
     constructor(x, y, w, h, imgId) {
@@ -27,15 +28,15 @@ export class Block extends PhysicsBody {
 
 export class WorldProp extends PhysicsBody {
     constructor(x, y, typeIndex) {
-        const imgId = `tex-crate${typeIndex}`;
-        const img = document.getElementById(imgId);
+        const propData = PROP_TYPES[typeIndex];
+        const img = document.getElementById(propData.imgId);
         super(x, y, img.width, img.height, false);
         this.image = img;
         this.typeIndex = typeIndex;
         this.setHitboxFromImage(img);
         this.fixedRotation = false;
         
-        this.mass = CONFIG.propMass;
+        this.mass = propData.mass || CONFIG.defaultPropMass;
         this.invMass = 1 / this.mass;
         this.inertia = (this.mass * (this.box.w * this.box.w + this.box.h * this.box.h)) / 12;
         this.invInertia = 1 / this.inertia;
