@@ -10,6 +10,7 @@ const CONFIG = {
     worldScale: 0.5,
     mapWidth: 4000,
     mapHeight: 3000,
-    angularDrag: 0.92,
-    maxAngularVelocity: 0.15
+    angularDrag: 0.94,
+    maxAngularVelocity: 0.2,
+    propMass: 15
 };
