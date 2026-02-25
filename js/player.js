@@ -61,18 +61,20 @@ class BasePlayer extends PhysicsBody {
         }
 
         if (this.heldProp) {
-            const px = this.heldProp.x;
-            const py = this.heldProp.y;
-            
             const targetX = this.cursor.x - this.heldProp.box.w / 2 - this.heldProp.box.x;
             const targetY = this.cursor.y - this.heldProp.box.h / 2 - this.heldProp.box.y;
 
-            this.heldProp.x += (targetX - this.heldProp.x) * 0.5;
-            this.heldProp.y += (targetY - this.heldProp.y) * 0.5;
+            this.heldProp.vx = (targetX - this.heldProp.x) * 0.3;
+            this.heldProp.vy = (targetY - this.heldProp.y) * 0.3;
+            
+            const maxSpeed = 25;
+            const speed = Math.sqrt(this.heldProp.vx ** 2 + this.heldProp.vy ** 2);
+            if (speed > maxSpeed) {
+                this.heldProp.vx = (this.heldProp.vx / speed) * maxSpeed;
+                this.heldProp.vy = (this.heldProp.vy / speed) * maxSpeed;
+            }
 
-            this.heldProp.vx = this.heldProp.x - px;
-            this.heldProp.vy = this.heldProp.y - py;
-            this.heldProp.angularVelocity = 0;
+            this.heldProp.angularVelocity *= 0.5;
         }
     }
 
