@@ -12,18 +12,18 @@ class InputHandler {
             this.keys[e.code] = false;
         });
 
-        canvas.addEventListener('mousemove', (e) => {
+        window.addEventListener('mousemove', (e) => {
             const rect = this.canvas.getBoundingClientRect();
             this.mouse.x = e.clientX - rect.left;
             this.mouse.y = e.clientY - rect.top;
         });
 
-        canvas.addEventListener('mousedown', (e) => {
+        window.addEventListener('mousedown', (e) => {
             if (e.button === 0) this.mouse.leftDown = true;
             if (e.button === 2) this.mouse.rightDown = true;
         });
 
-        canvas.addEventListener('mouseup', (e) => {
+        window.addEventListener('mouseup', (e) => {
             if (e.button === 0) this.mouse.leftDown = false;
             if (e.button === 2) this.mouse.rightDown = false;
         });
