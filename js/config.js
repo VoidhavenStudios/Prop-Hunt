@@ -5,7 +5,7 @@ const CONFIG = {
     groundAccel: 2.5,
     airAccel: 0.8,
     maxSpeed: 16.0,
-    baseJumpForce: 24.0,
+    baseJumpForce: 28.0, 
     reachDistance: 800,
     worldScale: 0.5,
     mapWidth: 4000,
