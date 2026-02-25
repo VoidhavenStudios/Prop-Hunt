@@ -12,24 +12,31 @@ class PhysicsBody {
         this.angle = 0;
         this.angularVelocity = 0;
         this.isHeld = false;
+        this.fixedRotation = false; 
     }
 
     update() {
         if (!this.isStatic) {
             if (!this.isHeld) {
                 this.vy += CONFIG.gravity;
+                
+                const friction = this.grounded ? CONFIG.groundFriction : CONFIG.airFriction;
+                this.vx *= friction;
             }
-            const friction = this.grounded ? CONFIG.groundFriction : CONFIG.airFriction;
-            this.vx *= friction;
-            
-            this.angularVelocity *= CONFIG.angularDrag;
-            if (Math.abs(this.angularVelocity) < 0.001) this.angularVelocity = 0;
-            if (this.angularVelocity > CONFIG.maxAngularVelocity) this.angularVelocity = CONFIG.maxAngularVelocity;
-            if (this.angularVelocity < -CONFIG.maxAngularVelocity) this.angularVelocity = -CONFIG.maxAngularVelocity;
+
+            if (!this.fixedRotation) {
+                this.angularVelocity *= CONFIG.angularDrag;
+                if (Math.abs(this.angularVelocity) < 0.001) this.angularVelocity = 0;
+                if (this.angularVelocity > CONFIG.maxAngularVelocity) this.angularVelocity = CONFIG.maxAngularVelocity;
+                if (this.angularVelocity < -CONFIG.maxAngularVelocity) this.angularVelocity = -CONFIG.maxAngularVelocity;
+                this.angle += this.angularVelocity;
+            } else {
+                this.angle = 0;
+                this.angularVelocity = 0;
+            }
 
             this.x += this.vx;
             this.y += this.vy;
-            this.angle += this.angularVelocity;
         }
     }
 
@@ -93,23 +100,33 @@ class PhysicsBody {
             mtv.y = -mtv.y;
         }
 
-        if (!this.isStatic && other.isStatic) {
+        if (this.isStatic) return false;
+
+        // Collision Response
+        if (other.isStatic) {
+            // Hit Wall
             this.x += mtv.x * minOverlap;
             this.y += mtv.y * minOverlap;
             this.applyCollisionResponse(mtv, other);
-        } else if (this.isStatic && !other.isStatic) {
-            other.x -= mtv.x * minOverlap;
-            other.y -= mtv.y * minOverlap;
-            other.applyCollisionResponse({ x: -mtv.x, y: -mtv.y }, this);
-        } else if (!this.isStatic && !other.isStatic) {
-            const massRatio = this.isHeld ? 0 : (other.isHeld ? 1 : 0.5);
-            const thisShift = minOverlap * (1 - massRatio);
-            const otherShift = minOverlap * massRatio;
             
-            this.x += mtv.x * thisShift;
-            this.y += mtv.y * thisShift;
-            other.x -= mtv.x * otherShift;
-            other.y -= mtv.y * otherShift;
+            // Kill velocity if held to prevent dragging through wall
+            if (this.isHeld) {
+                this.vx = 0;
+                this.vy = 0;
+            }
+        } else {
+            // Hit Object
+            const mass1 = this.isHeld ? 100 : 1; 
+            const mass2 = other.isHeld ? 100 : 1;
+            const totalMass = mass1 + mass2;
+            const r1 = mass2 / totalMass;
+            const r2 = mass1 / totalMass;
+
+            this.x += mtv.x * minOverlap * r1;
+            this.y += mtv.y * minOverlap * r1;
+            other.x -= mtv.x * minOverlap * r2;
+            other.y -= mtv.y * minOverlap * r2;
+
             this.applyCollisionResponse(mtv, other);
             other.applyCollisionResponse({ x: -mtv.x, y: -mtv.y }, this);
         }
@@ -118,22 +135,24 @@ class PhysicsBody {
     }
 
     applyCollisionResponse(normal, other) {
-        if (normal.y < -0.5) {
-            this.grounded = true;
-        }
+        if (normal.y < -0.5) this.grounded = true;
 
         const dot = this.vx * normal.x + this.vy * normal.y;
+        
+        // Bounce / Slide
         if (dot < 0) {
-            this.vx -= dot * normal.x * 1.2;
-            this.vy -= dot * normal.y * 1.2;
+            const restitution = 0.2;
+            const j = -(1 + restitution) * dot;
+            
+            this.vx += j * normal.x;
+            this.vy += j * normal.y;
         }
 
-        if (!this.isHeld && Math.abs(dot) > 1.0) {
-            if (Math.abs(normal.y) > 0.5) {
-                this.angularVelocity += this.vx * 0.01 * normal.y;
-            } else if (Math.abs(normal.x) > 0.5) {
-                this.angularVelocity -= this.vy * 0.01 * normal.x;
-            }
+        // Friction induced rotation
+        if (!this.fixedRotation && !this.isHeld) {
+            const tangent = { x: -normal.y, y: normal.x };
+            const v t = this.vx * tangent.x + this.vy * tangent.y;
+            this.angularVelocity -= v t * 0.002;
         }
     }
 }
