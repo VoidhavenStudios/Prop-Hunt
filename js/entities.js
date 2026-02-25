@@ -4,14 +4,11 @@ import { PROP_TYPES } from './objects.js';
 export class Block extends PhysicsBody {
     constructor(x, y, w, h, imgId) {
         super(x, y, w, h, true);
-        console.info(`Creating Block at (${x}, ${y}) with size (${w}x${h})`);
         this.image = document.getElementById(imgId);
-        if (!this.image) console.error(`Block image with ID ${imgId} not found!`);
         this.pattern = null;
     }
     draw(ctx) {
         if (!this.pattern && this.image && this.image.complete) {
-            console.debug("Creating pattern for Block");
             this.pattern = ctx.createPattern(this.image, 'repeat');
         }
         if (this.pattern) {
@@ -29,16 +26,13 @@ export class Block extends PhysicsBody {
 export class WorldProp extends PhysicsBody {
     constructor(x, y, typeIndex) {
         const propData = PROP_TYPES[typeIndex];
-        if (!propData) console.error(`Invalid prop typeIndex: ${typeIndex}`);
-        const img = document.getElementById(propData.imgId);
-        if (!img) console.error(`WorldProp image with ID ${propData.imgId} not found!`);
+        const img = document.getElementById(propData ? propData.imgId : 'tex-crate0');
         super(x, y, img ? img.width : 64, img ? img.height : 64, false);
-        console.info(`Creating WorldProp at (${x}, ${y}) type: ${typeIndex}`);
         this.image = img;
         this.typeIndex = typeIndex;
         if (img) this.setHitboxFromImage(img);
         this.fixedRotation = false;
-        this.mass = propData.mass || CONFIG.defaultPropMass;
+        this.mass = (propData && propData.mass) || CONFIG.defaultPropMass;
         this.invMass = 1 / this.mass;
         this.inertia = (this.mass * (this.box.w * this.box.w + this.box.h * this.box.h)) / 12;
         this.invInertia = 1 / this.inertia;
