@@ -11,12 +11,25 @@ class BasePlayer extends PhysicsBody {
     }
 
     commonInput(input, camera, props) {
+        const accel = this.grounded ? CONFIG.groundAccel : CONFIG.airAccel;
+        let moving = false;
+
         if (input.keys['KeyA'] || input.keys['ArrowLeft']) {
-            this.vx -= 1;
+            this.vx -= accel;
+            moving = true;
         }
         if (input.keys['KeyD'] || input.keys['ArrowRight']) {
-            this.vx += 1;
+            this.vx += accel;
+            moving = true;
         }
+
+        if (!moving) {
+            this.vx *= this.grounded ? CONFIG.groundFriction : CONFIG.airFriction;
+        }
+
+        if (this.vx > CONFIG.maxSpeed) this.vx = CONFIG.maxSpeed;
+        if (this.vx < -CONFIG.maxSpeed) this.vx = -CONFIG.maxSpeed;
+
         if ((input.keys['KeyW'] || input.keys['ArrowUp'] || input.keys['Space']) && this.grounded) {
             let bonus = 0;
             if (this.isDisguised) {
@@ -65,11 +78,11 @@ class BasePlayer extends PhysicsBody {
             const targetX = this.cursor.x - this.heldProp.box.w / 2 - this.heldProp.box.x;
             const targetY = this.cursor.y - this.heldProp.box.h / 2 - this.heldProp.box.y;
             
-            const dx = targetX - this.heldProp.x;
-            const dy = targetY - this.heldProp.y;
+            const pDx = targetX - this.heldProp.x;
+            const pDy = targetY - this.heldProp.y;
 
-            this.heldProp.vx = dx * 0.2;
-            this.heldProp.vy = dy * 0.2;
+            this.heldProp.vx = pDx * 0.25;
+            this.heldProp.vy = pDy * 0.25;
             
             this.heldProp.x += this.heldProp.vx;
             this.heldProp.y += this.heldProp.vy;
