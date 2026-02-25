@@ -1,4 +1,7 @@
-class Block extends PhysicsBody {
+import { CONFIG } from './config.js';
+import { PhysicsBody } from './physics.js';
+
+export class Block extends PhysicsBody {
     constructor(x, y, w, h, imgId) {
         super(x, y, w, h, true);
         this.image = document.getElementById(imgId);
@@ -22,7 +25,7 @@ class Block extends PhysicsBody {
     }
 }
 
-class WorldProp extends PhysicsBody {
+export class WorldProp extends PhysicsBody {
     constructor(x, y, typeIndex) {
         const imgId = `tex-crate${typeIndex}`;
         const img = document.getElementById(imgId);
