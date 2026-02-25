@@ -1,4 +1,6 @@
-class HunterPlayer extends BasePlayer {
+import { BasePlayer } from './player.js';
+
+export class HunterPlayer extends BasePlayer {
     constructor(x, y) {
         super(x, y);
         this.guns = [
