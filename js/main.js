@@ -1,3 +1,11 @@
+import { CONFIG } from './config.js';
+import { checkAABB } from './math.js';
+import { InputHandler } from './input.js';
+import { Block, WorldProp } from './entities.js';
+import { HunterPlayer } from './hunter.js';
+import { PropPlayer } from './prop.js';
+import { MenuController } from './menu.js';
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
@@ -8,7 +16,6 @@ let player;
 let isHunter = true;
 
 const camera = { x: 0, y: 0 };
-
 let menu;
 
 function resize() {
@@ -119,35 +126,38 @@ function loop() {
         player.update();
         player.grounded = false;
         
-        for (let block of mapBlocks) player.resolveCollision(block);
-        
-        if (player instanceof PropPlayer && player.isDisguised) {
-             for (let prop of props) {
-                 if (prop !== player.heldProp) {
-                     player.resolveCollision(prop);
-                 }
-             }
+        for (let i = 0; i < props.length; i++) {
+            props[i].update();
+            props[i].grounded = false;
         }
 
-        for (let i = 0; i < props.length; i++) {
-            const prop = props[i];
-            prop.update();
-            prop.grounded = false;
+        for (let iter = 0; iter < 4; iter++) {
+            for (let block of mapBlocks) player.resolveCollision(block);
             
-            for (let block of mapBlocks) prop.resolveCollision(block);
-            
-            for (let j = i + 1; j < props.length; j++) {
-                prop.resolveCollision(props[j]);
+            if (player instanceof PropPlayer && player.isDisguised) {
+                 for (let prop of props) {
+                     if (prop !== player.heldProp) {
+                         player.resolveCollision(prop);
+                     }
+                 }
             }
 
-            if (player.heldProp === prop) {
-                for (let other of props) {
-                    if (other !== prop) {
-                        prop.resolveCollision(other);
-                    }
+            for (let i = 0; i < props.length; i++) {
+                for (let block of mapBlocks) props[i].resolveCollision(block);
+                
+                for (let j = i + 1; j < props.length; j++) {
+                    props[i].resolveCollision(props[j]);
                 }
-                for (let block of mapBlocks) {
-                    prop.resolveCollision(block);
+
+                if (player.heldProp === props[i]) {
+                    for (let other of props) {
+                        if (other !== props[i]) {
+                            props[i].resolveCollision(other);
+                        }
+                    }
+                    for (let block of mapBlocks) {
+                        props[i].resolveCollision(block);
+                    }
                 }
             }
         }
