@@ -59,11 +59,8 @@ class BasePlayer extends PhysicsBody {
             this.cursor.y = worldMouseY;
         }
 
-        if (input.mouse.rightPressed) {
-            if (this.heldProp) {
-                this.heldProp.isHeld = false;
-                this.heldProp = null;
-            } else {
+        if (input.mouse.rightDown) {
+            if (!this.heldProp) {
                 for (let prop of props) {
                     if (pointInPolygon(this.cursor, prop.getVertices())) {
                         this.heldProp = prop;
@@ -72,22 +69,34 @@ class BasePlayer extends PhysicsBody {
                     }
                 }
             }
-        }
+            
+            if (this.heldProp) {
+                const targetX = this.cursor.x - this.heldProp.box.w / 2 - this.heldProp.box.x;
+                const targetY = this.cursor.y - this.heldProp.box.h / 2 - this.heldProp.box.y;
+                
+                const pDx = targetX - this.heldProp.x;
+                const pDy = targetY - this.heldProp.y;
 
-        if (this.heldProp) {
-            const targetX = this.cursor.x - this.heldProp.box.w / 2 - this.heldProp.box.x;
-            const targetY = this.cursor.y - this.heldProp.box.h / 2 - this.heldProp.box.y;
-            
-            const pDx = targetX - this.heldProp.x;
-            const pDy = targetY - this.heldProp.y;
+                let targetVx = pDx * 0.2;
+                let targetVy = pDy * 0.2;
+                
+                const maxHoldSpeed = 25;
+                const speed = Math.sqrt(targetVx * targetVx + targetVy * targetVy);
+                if (speed > maxHoldSpeed) {
+                    targetVx = (targetVx / speed) * maxHoldSpeed;
+                    targetVy = (targetVy / speed) * maxHoldSpeed;
+                }
 
-            this.heldProp.vx = pDx * 0.25;
-            this.heldProp.vy = pDy * 0.25;
-            
-            this.heldProp.x += this.heldProp.vx;
-            this.heldProp.y += this.heldProp.vy;
-            
-            this.heldProp.angularVelocity *= 0.1;
+                this.heldProp.vx += (targetVx - this.heldProp.vx) * 0.5;
+                this.heldProp.vy += (targetVy - this.heldProp.vy) * 0.5;
+                
+                this.heldProp.angularVelocity *= 0.8;
+            }
+        } else {
+            if (this.heldProp) {
+                this.heldProp.isHeld = false;
+                this.heldProp = null;
+            }
         }
     }
 
