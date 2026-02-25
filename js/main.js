@@ -5,6 +5,7 @@ import { Block, WorldProp } from './entities.js';
 import { HunterPlayer } from './hunter.js';
 import { PropPlayer } from './prop.js';
 import { MenuController } from './menu.js';
+import { PROP_TYPES } from './objects.js';
 
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
@@ -79,8 +80,9 @@ function init() {
     mapBlocks.push(new Block(1200, h - 200, 100, 150, 'tex-brick'));
     mapBlocks.push(new Block(1500, h - 600, 300, 50, 'tex-brick'));
 
+    const propKeys = Object.keys(PROP_TYPES);
     for(let i=0; i<40; i++) {
-        const type = Math.floor(Math.random() * 6);
+        const type = propKeys[Math.floor(Math.random() * propKeys.length)];
         const px = 100 + Math.random() * (w - 200);
         const py = h - 200 - Math.random() * 500;
         props.push(new WorldProp(px, py, type));
