@@ -1,6 +1,5 @@
 export function getHitbox(entity) {
     if (!entity || !entity.box) {
-        console.warn("getHitbox called with invalid entity", entity);
         return { x: 0, y: 0, w: 0, h: 0 };
     }
     return {
@@ -15,12 +14,14 @@ export function calculateTightHitbox(img) {
         console.warn("calculateTightHitbox called with invalid image");
         return { x: 0, y: 0, w: 64, h: 64 };
     }
-    const c = document.createElement('canvas');
-    c.width = img.width || 64;
-    c.height = img.height || 64;
-    const cx = c.getContext('2d');
-    cx.drawImage(img, 0, 0);
     try {
+        const c = document.createElement('canvas');
+        if (!c) throw new Error("Failed to create canvas element");
+        c.width = img.width || 64;
+        c.height = img.height || 64;
+        const cx = c.getContext('2d');
+        if (!cx) throw new Error("Failed to get 2d context");
+        cx.drawImage(img, 0, 0);
         const data = cx.getImageData(0, 0, c.width, c.height).data;
         let minX = c.width, minY = c.height, maxX = 0, maxY = 0;
         let found = false;
@@ -35,11 +36,10 @@ export function calculateTightHitbox(img) {
                 }
             }
         }
-        if (!found) console.debug("No solid pixels found in image, using full bounds");
         return found ? { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 } : { x: 0, y: 0, w: c.width, h: c.height };
     } catch (e) {
         console.error("Error calculating tight hitbox", e);
-        return { x: 0, y: 0, w: c.width, h: c.height };
+        return { x: 0, y: 0, w: 64, h: 64 };
     }
 }
 export function crossProduct(o, a, b) {
@@ -47,10 +47,7 @@ export function crossProduct(o, a, b) {
     return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
 }
 export function convexHull(points) {
-    if (!points || points.length === 0) {
-        console.warn("convexHull called with empty points array");
-        return null;
-    }
+    if (!points || points.length === 0) return null;
     points.sort((a, b) => a.x === b.x ? a.y - b.y : a.x - b.x);
     const lower = [];
     for (let i = 0; i < points.length; i++) {
@@ -77,17 +74,16 @@ export function convexHull(points) {
     return simplified.length >= 3 ? simplified : fullHull;
 }
 export function calculateConvexHullFromImage(img) {
-    if (!img) {
-        console.warn("calculateConvexHullFromImage called with invalid image");
-        return null;
-    }
-    const c = document.createElement('canvas');
-    c.width = img.width || 64;
-    c.height = img.height || 64;
-    const cx = c.getContext('2d');
-    cx.drawImage(img, 0, 0);
-    const points = [];
+    if (!img) return null;
     try {
+        const c = document.createElement('canvas');
+        if (!c) throw new Error("Failed to create canvas");
+        c.width = img.width || 64;
+        c.height = img.height || 64;
+        const cx = c.getContext('2d');
+        if (!cx) throw new Error("Failed to get context");
+        cx.drawImage(img, 0, 0);
+        const points = [];
         const data = cx.getImageData(0, 0, c.width, c.height).data;
         for (let y = 0; y < c.height; y += 2) {
             for (let x = 0; x < c.width; x += 2) {
@@ -96,10 +92,7 @@ export function calculateConvexHullFromImage(img) {
                 }
             }
         }
-        if (points.length === 0) {
-            console.debug("No solid pixels found for convex hull");
-            return null;
-        }
+        if (points.length === 0) return null;
         return convexHull(points);
     } catch (e) {
         console.error("Error calculating convex hull", e);
