@@ -1,16 +1,15 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-const uiLayer = document.getElementById('ui-layer');
-const pauseMenu = document.getElementById('pause-menu');
 
 const input = new InputHandler(canvas);
 const mapBlocks = [];
 const props = [];
 let player;
-let isPaused = false;
 let isHunter = true;
 
 const camera = { x: 0, y: 0 };
+
+let menu;
 
 function resize() {
     canvas.width = window.innerWidth;
@@ -19,25 +18,6 @@ function resize() {
 
 window.addEventListener('resize', resize);
 resize();
-
-input.onPauseToggle = () => {
-    isPaused = !isPaused;
-    if (isPaused) {
-        pauseMenu.classList.remove('hidden');
-        uiLayer.style.display = 'none';
-    } else {
-        pauseMenu.classList.add('hidden');
-        uiLayer.style.display = 'block';
-    }
-};
-
-document.getElementById('btn-resume').onclick = input.onPauseToggle;
-document.getElementById('btn-exit').onclick = () => window.location.reload();
-document.getElementById('btn-team').onclick = () => {
-    isHunter = !isHunter;
-    spawnPlayer();
-    input.onPauseToggle();
-};
 
 function spawnPlayer() {
     const startX = 200;
@@ -50,6 +30,12 @@ function spawnPlayer() {
 }
 
 function init() {
+    menu = new MenuController(
+        input, 
+        () => { isHunter = !isHunter; }, 
+        spawnPlayer
+    );
+
     const w = CONFIG.mapWidth;
     const h = CONFIG.mapHeight;
     const t = 64; 
@@ -101,7 +87,7 @@ function updateCamera() {
 }
 
 function loop() {
-    if (!isPaused) {
+    if (!menu.isPaused) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         updateCamera();
 
