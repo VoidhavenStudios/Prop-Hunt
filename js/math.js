@@ -1,4 +1,5 @@
 export function getHitbox(entity) {
+    if (!entity || !entity.box) return { x: 0, y: 0, w: 0, h: 0 };
     return {
         x: entity.x + entity.box.x,
         y: entity.y + entity.box.y,
@@ -8,9 +9,10 @@ export function getHitbox(entity) {
 }
 
 export function calculateTightHitbox(img) {
+    if (!img) return { x: 0, y: 0, w: 64, h: 64 };
     const c = document.createElement('canvas');
-    c.width = img.width;
-    c.height = img.height;
+    c.width = img.width || 64;
+    c.height = img.height || 64;
     const cx = c.getContext('2d');
     cx.drawImage(img, 0, 0);
     try {
@@ -28,17 +30,19 @@ export function calculateTightHitbox(img) {
                 }
             }
         }
-        return found ? { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 } : { x: 0, y: 0, w: img.width, h: img.height };
+        return found ? { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 } : { x: 0, y: 0, w: c.width, h: c.height };
     } catch (e) {
-        return { x: 0, y: 0, w: img.width, h: img.height };
+        return { x: 0, y: 0, w: c.width, h: c.height };
     }
 }
 
 export function crossProduct(o, a, b) {
+    if (!o || !a || !b) return 0;
     return (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
 }
 
 export function convexHull(points) {
+    if (!points || points.length === 0) return null;
     points.sort((a, b) => a.x === b.x ? a.y - b.y : a.x - b.x);
     const lower = [];
     for (let i = 0; i < points.length; i++) {
@@ -67,9 +71,10 @@ export function convexHull(points) {
 }
 
 export function calculateConvexHullFromImage(img) {
+    if (!img) return null;
     const c = document.createElement('canvas');
-    c.width = img.width;
-    c.height = img.height;
+    c.width = img.width || 64;
+    c.height = img.height || 64;
     const cx = c.getContext('2d');
     cx.drawImage(img, 0, 0);
     const points = [];
@@ -90,10 +95,12 @@ export function calculateConvexHullFromImage(img) {
 }
 
 export function getAxes(vertices) {
+    if (!vertices) return [];
     const axes = [];
     for (let i = 0; i < vertices.length; i++) {
         const p1 = vertices[i];
         const p2 = vertices[(i + 1) % vertices.length];
+        if (!p1 || !p2) continue;
         const edge = { x: p2.x - p1.x, y: p2.y - p1.y };
         const len = Math.sqrt(edge.x * edge.x + edge.y * edge.y);
         if (len > 0) axes.push({ x: -edge.y / len, y: edge.x / len });
@@ -103,7 +110,9 @@ export function getAxes(vertices) {
 
 export function project(vertices, axis) {
     let min = Infinity, max = -Infinity;
+    if (!vertices || !axis) return { min, max };
     for (const v of vertices) {
+        if (!v) continue;
         const proj = v.x * axis.x + v.y * axis.y;
         if (proj < min) min = proj;
         if (proj > max) max = proj;
@@ -112,10 +121,14 @@ export function project(vertices, axis) {
 }
 
 export function pointInPolygon(point, vertices) {
+    if (!point || !vertices) return false;
     let inside = false;
     for (let i = 0, j = vertices.length - 1; i < vertices.length; j = i++) {
-        const xi = vertices[i].x, yi = vertices[i].y;
-        const xj = vertices[j].x, yj = vertices[j].y;
+        const vi = vertices[i];
+        const vj = vertices[j];
+        if (!vi || !vj) continue;
+        const xi = vi.x, yi = vi.y;
+        const xj = vj.x, yj = vj.y;
         const intersect = ((yi > point.y) !== (yj > point.y))
             && (point.x < (xj - xi) * (point.y - yi) / (yj - yi) + xi);
         if (intersect) inside = !inside;
@@ -124,6 +137,7 @@ export function pointInPolygon(point, vertices) {
 }
 
 export function checkAABB(rect1, rect2) {
+    if (!rect1 || !rect2) return false;
     return (
         rect1.x < rect2.x + rect2.w &&
         rect1.x + rect1.w > rect2.x &&
@@ -134,11 +148,13 @@ export function checkAABB(rect1, rect2) {
 
 export function findContactPoint(v1, v2, body1, body2) {
     let cx = 0, cy = 0, count = 0;
-    for (let p of v1) {
-        if (pointInPolygon(p, v2)) { cx += p.x; cy += p.y; count++; }
-    }
-    for (let p of v2) {
-        if (pointInPolygon(p, v1)) { cx += p.x; cy += p.y; count++; }
+    if (v1 && v2) {
+        for (let p of v1) {
+            if (p && pointInPolygon(p, v2)) { cx += p.x; cy += p.y; count++; }
+        }
+        for (let p of v2) {
+            if (p && pointInPolygon(p, v1)) { cx += p.x; cy += p.y; count++; }
+        }
     }
     if (count > 0) return { x: cx / count, y: cy / count };
     
