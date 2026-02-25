@@ -31,6 +31,11 @@ class WorldProp extends PhysicsBody {
         this.typeIndex = typeIndex;
         this.setHitboxFromImage(img);
         this.fixedRotation = false;
+        
+        this.mass = CONFIG.propMass;
+        this.invMass = 1 / this.mass;
+        this.inertia = (this.mass * (this.box.w * this.box.w + this.box.h * this.box.h)) / 12;
+        this.invInertia = 1 / this.inertia;
     }
 
     draw(ctx) {
