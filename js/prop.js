@@ -36,7 +36,7 @@ class PropPlayer extends BasePlayer {
         this.h = targetProp.image.height;
         this.box = { ...targetProp.box };
         this.y -= 10;
-        this.angle = targetProp.angle;
+        this.angle = 0;
     }
 
     resetDisguise() {
@@ -52,7 +52,7 @@ class PropPlayer extends BasePlayer {
     draw(ctx) {
         ctx.save();
         ctx.translate(this.x + this.box.x + this.box.w / 2, this.y + this.box.y + this.box.h / 2);
-        ctx.rotate(this.angle);
+        if (!this.facingRight) ctx.scale(-1, 1);
         ctx.drawImage(this.currentImage, -this.box.w / 2 - this.box.x, -this.box.h / 2 - this.box.y);
         ctx.restore();
         
