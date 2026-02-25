@@ -6,12 +6,12 @@ export const CONFIG = {
     airAccel: 0.6,
     maxSpeed: 16.0,
     maxPropSpeed: 25.0,
-    baseJumpForce: 20.0, 
+    baseJumpForce: 24.0, 
     reachDistance: 800,
     worldScale: 0.5,
     mapWidth: 4000,
     mapHeight: 3000,
     angularDrag: 0.96,
     maxAngularVelocity: 0.25,
-    propMass: 15
+    defaultPropMass: 15
 };
