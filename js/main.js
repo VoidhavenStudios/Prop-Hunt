@@ -131,6 +131,17 @@ function loop() {
             for (let j = i + 1; j < props.length; j++) {
                 prop.resolveCollision(props[j]);
             }
+
+            if (player.heldProp === prop) {
+                for (let other of props) {
+                    if (other !== prop) {
+                        prop.resolveCollision(other);
+                    }
+                }
+                for (let block of mapBlocks) {
+                    prop.resolveCollision(block);
+                }
+            }
         }
 
         ctx.save();
