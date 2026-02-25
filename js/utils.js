@@ -1,12 +1,15 @@
 const CONFIG = {
     gravity: 0.5,
-    friction: 0.8,
+    friction: 0.95, 
+    groundFriction: 0.9,
+    airFriction: 0.98,
     speed: 5,
     baseJumpForce: 14,
-    reachDistance: 450,
+    reachDistance: 700, 
     worldScale: 0.5,
-    mapWidth: 3000,
-    mapHeight: 2000
+    mapWidth: 4000,
+    mapHeight: 3000,
+    angularDrag: 0.95
 };
 
 function checkAABB(rect1, rect2) {
@@ -31,4 +34,31 @@ function getHitbox(entity) {
         w: entity.box.w,
         h: entity.box.h
     };
+}
+
+function calculateTightHitbox(img) {
+    const c = document.createElement('canvas');
+    c.width = img.width;
+    c.height = img.height;
+    const cx = c.getContext('2d');
+    cx.drawImage(img, 0, 0);
+    try {
+        const data = cx.getImageData(0, 0, c.width, c.height).data;
+        let minX = c.width, minY = c.height, maxX = 0, maxY = 0;
+        let found = false;
+        for (let y = 0; y < c.height; y++) {
+            for (let x = 0; x < c.width; x++) {
+                if (data[(y * c.width + x) * 4 + 3] > 0) {
+                    if (x < minX) minX = x;
+                    if (x > maxX) maxX = x;
+                    if (y < minY) minY = y;
+                    if (y > maxY) maxY = y;
+                    found = true;
+                }
+            }
+        }
+        return found ? { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 } : { x: 0, y: 0, w: img.width, h: img.height };
+    } catch (e) {
+        return { x: 0, y: 0, w: img.width, h: img.height };
+    }
 }
