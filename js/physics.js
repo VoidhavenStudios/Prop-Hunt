@@ -9,6 +9,7 @@ class PhysicsBody {
         this.isStatic = isStatic;
         this.grounded = false;
         this.box = { x: 0, y: 0, w: w, h: h };
+        this.localVertices = null;
         this.angle = 0;
         this.angularVelocity = 0;
         this.isHeld = false;
@@ -19,45 +20,52 @@ class PhysicsBody {
         if (!this.isStatic) {
             if (!this.isHeld) {
                 this.vy += CONFIG.gravity;
-                
-                if (!this.fixedRotation) {
-                    if (this.grounded) {
-                        this.angularVelocity *= 0.75;
-                        if (Math.abs(this.angularVelocity) < 0.03) {
-                            const snap = Math.round(this.angle / (Math.PI / 2)) * (Math.PI / 2);
-                            this.angle += (snap - this.angle) * 0.3;
-                            if (Math.abs(this.angle - snap) < 0.01) {
-                                this.angle = snap;
-                                this.angularVelocity = 0;
-                            }
-                        }
-                    } else {
-                        this.angularVelocity *= CONFIG.angularDrag;
-                    }
-
-                    if (this.angularVelocity > CONFIG.maxAngularVelocity) this.angularVelocity = CONFIG.maxAngularVelocity;
-                    if (this.angularVelocity < -CONFIG.maxAngularVelocity) this.angularVelocity = -CONFIG.maxAngularVelocity;
-                    this.angle += this.angularVelocity;
-                } else {
-                    this.angle = 0;
-                    this.angularVelocity = 0;
-                }
-                
-                this.x += this.vx;
-                this.y += this.vy;
             }
+            
+            const friction = this.grounded ? CONFIG.groundFriction : CONFIG.airFriction;
+            this.vx *= friction;
+            
+            if (!this.fixedRotation) {
+                if (this.grounded && !this.isHeld) {
+                    this.angularVelocity *= 0.75;
+                    if (Math.abs(this.angularVelocity) < 0.03) {
+                        const snap = Math.round(this.angle / (Math.PI / 2)) * (Math.PI / 2);
+                        this.angle += (snap - this.angle) * 0.3;
+                        if (Math.abs(this.angle - snap) < 0.01) {
+                            this.angle = snap;
+                            this.angularVelocity = 0;
+                        }
+                    }
+                } else {
+                    this.angularVelocity *= CONFIG.angularDrag;
+                }
+
+                if (this.angularVelocity > CONFIG.maxAngularVelocity) this.angularVelocity = CONFIG.maxAngularVelocity;
+                if (this.angularVelocity < -CONFIG.maxAngularVelocity) this.angularVelocity = -CONFIG.maxAngularVelocity;
+                this.angle += this.angularVelocity;
+            } else {
+                this.angle = 0;
+                this.angularVelocity = 0;
+            }
+            
+            this.x += this.vx;
+            this.y += this.vy;
         }
     }
 
     setHitboxFromImage(img) {
         this.box = calculateTightHitbox(img);
+        const hull = calculateConvexHullFromImage(img);
+        if (hull) {
+            const cx = this.box.x + this.box.w / 2;
+            const cy = this.box.y + this.box.h / 2;
+            this.localVertices = hull.map(p => ({ x: p.x - cx, y: p.y - cy }));
+        }
     }
 
     getVertices() {
         const cx = this.x + this.box.x + this.box.w / 2;
         const cy = this.y + this.box.y + this.box.h / 2;
-        const hw = this.box.w / 2;
-        const hh = this.box.h / 2;
         const cos = Math.cos(this.angle);
         const sin = Math.sin(this.angle);
 
@@ -66,6 +74,12 @@ class PhysicsBody {
             y: cy + dx * sin + dy * cos
         });
 
+        if (this.localVertices && this.localVertices.length > 2) {
+            return this.localVertices.map(v => rotate(v.x, v.y));
+        }
+
+        const hw = this.box.w / 2;
+        const hh = this.box.h / 2;
         return [
             rotate(-hw, -hh),
             rotate(hw, -hh),
@@ -88,9 +102,7 @@ class PhysicsBody {
             const p1 = project(v1, axis);
             const p2 = project(v2, axis);
 
-            if (p1.max < p2.min || p2.max < p1.min) {
-                return false;
-            }
+            if (p1.max < p2.min || p2.max < p1.min) return false;
 
             const overlap = Math.min(p1.max - p2.min, p2.max - p1.min);
             if (overlap < minOverlap) {
@@ -111,17 +123,7 @@ class PhysicsBody {
             mtv.y = -mtv.y;
         }
 
-        if (this.isHeld && !other.isStatic) {
-            other.x -= mtv.x * minOverlap;
-            other.y -= mtv.y * minOverlap;
-            other.applyCollisionResponse({ x: -mtv.x, y: -mtv.y }, this);
-        }
-        else if (other.isHeld && !this.isStatic) {
-            this.x += mtv.x * minOverlap;
-            this.y += mtv.y * minOverlap;
-            this.applyCollisionResponse(mtv, other);
-        }
-        else if (!this.isStatic && other.isStatic) {
+        if (!this.isStatic && other.isStatic) {
             this.x += mtv.x * minOverlap;
             this.y += mtv.y * minOverlap;
             this.applyCollisionResponse(mtv, other);
@@ -143,9 +145,7 @@ class PhysicsBody {
     }
 
     applyCollisionResponse(normal, other) {
-        if (normal.y < -0.5) {
-            this.grounded = true;
-        }
+        if (normal.y < -0.5) this.grounded = true;
 
         const dot = this.vx * normal.x + this.vy * normal.y;
         if (dot < 0) {
