@@ -1,4 +1,8 @@
-class BasePlayer extends PhysicsBody {
+import { CONFIG } from './config.js';
+import { PhysicsBody } from './physics.js';
+import { pointInPolygon } from './math.js';
+
+export class BasePlayer extends PhysicsBody {
     constructor(x, y) {
         const img = document.getElementById('tex-player');
         super(x, y, img.width, img.height, false);
@@ -79,8 +83,9 @@ class BasePlayer extends PhysicsBody {
                 const pDx = targetX - this.heldProp.x;
                 const pDy = targetY - this.heldProp.y;
 
-                this.heldProp.vx += pDx * 0.15;
-                this.heldProp.vy += pDy * 0.15;
+                this.heldProp.vx += (pDx * 0.2 - this.heldProp.vx) * 0.6;
+                this.heldProp.vy += (pDy * 0.2 - this.heldProp.vy) * 0.6;
+                this.heldProp.angularVelocity *= 0.8;
             }
         } else {
             if (this.heldProp) {
