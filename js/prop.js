@@ -6,32 +6,24 @@ class PropPlayer extends BasePlayer {
     }
 
     handleSpecificInput(input, entities) {
-        // P to Unmorph
         if (input.keys['KeyP']) {
             this.resetDisguise();
         }
 
-        if (input.mouse.leftDown) {
+        if (input.mouse.leftPressed) {
             this.tryMorph(entities);
-            input.mouse.leftDown = false;
         }
 
-        if (input.mouse.rightDown) {
-            // Grab logic (placeholder)
-        }
-        
         if (input.mouse.middleDown) {
-            // Taunt logic (placeholder)
         }
     }
 
     tryMorph(props) {
         for (let prop of props) {
-            const r = getHitbox(prop);
-            // Check if cursor clicks the prop
-            if (this.cursor.x >= r.x && this.cursor.x <= r.x + r.w &&
-                this.cursor.y >= r.y && this.cursor.y <= r.y + r.h) {
-                this.becomeProp(prop);
+            if (pointInPolygon(this.cursor, prop.getVertices())) {
+                if (prop !== this.heldProp) {
+                    this.becomeProp(prop);
+                }
                 return;
             }
         }
@@ -44,8 +36,6 @@ class PropPlayer extends BasePlayer {
         this.h = targetProp.image.height;
         this.box = { ...targetProp.box };
         this.y -= 10;
-        
-        // Inherit rotation
         this.angle = targetProp.angle;
     }
 
@@ -60,15 +50,12 @@ class PropPlayer extends BasePlayer {
     }
 
     draw(ctx) {
-        if (this.isDisguised) {
-            ctx.save();
-            ctx.translate(this.x + this.w / 2, this.y + this.h / 2);
-            ctx.rotate(this.angle);
-            ctx.drawImage(this.currentImage, -this.w / 2, -this.h / 2);
-            ctx.restore();
-        } else {
-            ctx.drawImage(this.originalImage, this.x, this.y);
-        }
+        ctx.save();
+        ctx.translate(this.x + this.box.x + this.box.w / 2, this.y + this.box.y + this.box.h / 2);
+        ctx.rotate(this.angle);
+        ctx.drawImage(this.currentImage, -this.box.w / 2 - this.box.x, -this.box.h / 2 - this.box.y);
+        ctx.restore();
+        
         this.drawCursor(ctx);
     }
 }
