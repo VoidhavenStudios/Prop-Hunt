@@ -15,3 +15,4 @@ export const CONFIG = {
     maxAngularVelocity: 0.25,
     defaultPropMass: 15
 };
+console.info("CONFIG initialized", CONFIG);
